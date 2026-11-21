@@ -96,10 +96,7 @@ private fun navigateTo(navController: androidx.navigation.NavHostController, rou
     val isSubpage = current != null && (
         current.startsWith("catalog?") || current.startsWith("title?") || current.startsWith("episode?")
         )
-    if (isSubpage) {
-        navController.popBackStack(route, false)
-        return
-    }
+    if (isSubpage && navController.popBackStack(route, false)) return
     navController.navigate(route) {
         popUpTo(navController.graph.startDestinationId) { inclusive = false }
         launchSingleTop = true
