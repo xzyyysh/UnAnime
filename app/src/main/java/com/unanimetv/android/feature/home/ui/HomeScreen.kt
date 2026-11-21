@@ -3,6 +3,7 @@ package com.unanimetv.android.feature.home.ui
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import androidx.compose.ui.platform.LocalConfiguration
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,20 +29,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.EmojiEvents
-import androidx.compose.material.icons.rounded.ErrorOutline
-import androidx.compose.material.icons.rounded.Movie
-import androidx.compose.material.icons.rounded.PlayCircle
-import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material.icons.rounded.SmartDisplay
-import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material.icons.rounded.TrendingUp
-import androidx.compose.material.icons.rounded.LocalFireDepartment
-import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -61,12 +48,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
 import com.notanime.es.util.UnAnimeLog
+import com.unanimetv.android.R
 import com.unanimetv.android.core.designsystem.component.EpisodeCard
 import com.unanimetv.android.core.designsystem.component.EmptyState
 import com.unanimetv.android.core.designsystem.component.LoadingState
@@ -117,7 +106,7 @@ fun HomeScreen(
     when {
         uiState.isLoading -> LoadingState(modifier = modifier)
         uiState.error != null -> EmptyState(
-            icon = Icons.Rounded.ErrorOutline,
+            icon = painterResource(R.drawable.ic_tabler_alert_circle),
             message = uiState.error.orEmpty(),
             modifier = modifier
         )
@@ -189,7 +178,11 @@ private fun HomeGrid(
         columns = GridCells.Fixed(2),
         state = gridState,
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 120.dp),
+        contentPadding = PaddingValues(
+            start = LocalConfiguration.current.screenWidthDp.dp * 0.012f,
+            end = LocalConfiguration.current.screenWidthDp.dp * 0.012f,
+            bottom = 120.dp
+        ),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         horizontalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
