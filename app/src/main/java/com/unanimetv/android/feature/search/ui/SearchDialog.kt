@@ -25,14 +25,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -54,6 +52,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.notanime.es.scraper.SearchResult
+import com.unanimetv.android.R
 import com.unanimetv.android.core.designsystem.tokens.Spacing
 
 @Composable
@@ -107,8 +106,15 @@ fun SearchDialog(
                         placeholder = { Text("Buscar anime...") },
                         singleLine = true,
                         shape = RoundedCornerShape(50),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            cursorColor = MaterialTheme.colorScheme.primary
+                        ),
                         leadingIcon = {
-                            Icon(Icons.Rounded.Search, contentDescription = null)
+                            Icon(painterResource(R.drawable.ic_tabler_search), contentDescription = null)
                         },
                         modifier = Modifier
                             .weight(1f)
@@ -116,7 +122,7 @@ fun SearchDialog(
                     )
                     IconButton(onClick = close) {
                         Icon(
-                            Icons.Rounded.Close,
+                            painterResource(R.drawable.ic_tabler_x),
                             contentDescription = "Cerrar",
                             tint = Color.White
                         )
@@ -190,7 +196,7 @@ fun SearchDialog(
                                                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
                                             ) {
                                                 Icon(
-                                                    Icons.Rounded.SearchOff,
+                                                    painterResource(R.drawable.ic_tabler_search_off),
                                                     contentDescription = null,
                                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
