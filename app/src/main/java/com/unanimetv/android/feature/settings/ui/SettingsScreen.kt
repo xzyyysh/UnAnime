@@ -18,12 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Code
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.OpenInNew
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -46,8 +40,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil3.imageLoader
+import com.unanimetv.android.R
 import com.unanimetv.android.core.BuildInfo
 import com.unanimetv.android.core.designsystem.theme.ThemeController
 import com.unanimetv.android.core.designsystem.theme.ThemeMode
@@ -123,7 +119,7 @@ private fun AboutCard() {
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
                 Icon(
-                    Icons.Rounded.Info,
+                    painterResource(R.drawable.ic_tabler_info_circle),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
@@ -167,7 +163,7 @@ private fun AboutCard() {
                     .padding(vertical = Spacing.sm, horizontal = Spacing.xs)
             ) {
                 Icon(
-                    Icons.Rounded.Code,
+                    painterResource(R.drawable.ic_tabler_code),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
@@ -179,7 +175,7 @@ private fun AboutCard() {
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Icon(
-                    Icons.Rounded.OpenInNew,
+                    painterResource(R.drawable.ic_tabler_external_link),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp)
@@ -211,7 +207,7 @@ private fun AppearanceCard(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
                 Icon(
-                    Icons.Rounded.Palette,
+                    painterResource(R.drawable.ic_tabler_palette),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
@@ -368,7 +364,7 @@ private fun CacheCard(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
                 Icon(
-                    Icons.Rounded.Shield,
+                    painterResource(R.drawable.ic_tabler_shield),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
