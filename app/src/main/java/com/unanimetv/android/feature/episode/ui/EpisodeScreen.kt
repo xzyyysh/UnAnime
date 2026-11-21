@@ -93,6 +93,7 @@ import com.unanimetv.android.core.designsystem.component.LoadingState
 import com.unanimetv.android.core.designsystem.tokens.Spacing
 import com.unanimetv.android.core.media.ImageDownloader
 import com.unanimetv.android.core.playback.CurrentStream
+import com.unanimetv.android.core.playback.PlayerFullscreen
 import com.unanimetv.android.core.playback.PlaybackStore
 import com.unanimetv.android.ui.LinkMenu
 import com.unanimetv.android.playback.PlaybackService
@@ -246,6 +247,7 @@ private fun EpisodeContent(
 
     val activity = context as? Activity
     DisposableEffect(fullscreen) {
+        PlayerFullscreen.set(fullscreen)
         if (fullscreen && activity != null) {
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             androidx.core.view.WindowCompat.getInsetsController(activity.window, activity.window.decorView).apply {
@@ -255,6 +257,7 @@ private fun EpisodeContent(
             }
         }
         onDispose {
+            PlayerFullscreen.set(false)
             if (fullscreen && activity != null) {
                 activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                 androidx.core.view.WindowCompat.getInsetsController(activity.window, activity.window.decorView)
@@ -263,38 +266,21 @@ private fun EpisodeContent(
         }
     }
 
-    if (fullscreen && controller != null && stream != null) {
-        Dialog(
-            onDismissRequest = { fullscreen = false },
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false
-            )
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-            ) {
-                PlayerVideo(
-                    player = controller!!,
-                    onToggleFullscreen = { fullscreen = false },
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
+    androidx.activity.compose.BackHandler(enabled = fullscreen) {
+        fullscreen = false
     }
 
     LaunchedEffect(uiState.url) {
         scrollState.animateScrollTo(0)
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.lg, bottom = ShellClearance)
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.lg, bottom = ShellClearance)
+        ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -381,6 +367,20 @@ private fun EpisodeContent(
                 fileName = ImageDownloader.safeFileName(uiState.title ?: "episodio", index),
                 onDismiss = { previewIndex = null }
             )
+        }
+        }
+        if (fullscreen && controller != null && stream != null) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(Color.Black)
+            ) {
+                PlayerVideo(
+                    player = controller!!,
+                    onToggleFullscreen = { fullscreen = false },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }
@@ -586,12 +586,7 @@ private fun PlayerSurface(
                 onToggleFullscreen = onToggleFullscreen,
                 modifier = Modifier.fillMaxSize()
             )
-            fullscreenActive -> BackdropBanner(
-                backdropUrl = backdropUrl,
-                canPlay = false,
-                resolving = false,
-                onPlay = {}
-            )
+            fullscreenActive -> Box(modifier = Modifier.fillMaxSize().background(Color.Black))
             player == null -> com.unanimetv.android.ui.NotAnimeLoader(
                 compact = true,
                 modifier = Modifier.fillMaxSize()

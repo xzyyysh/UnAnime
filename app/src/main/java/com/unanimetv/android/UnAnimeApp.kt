@@ -57,26 +57,37 @@ fun UnAnimeApp() {
         )
     val activeRoute = if (isSubpage) TopLevelDestination.HOME.route else currentRoute
     val useRail = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600
+    val RailClearance = 112.dp
+    val playerFullscreen by com.unanimetv.android.core.playback.PlayerFullscreen.active.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        if (useRail) {
-            Row(modifier = Modifier.fillMaxSize()) {
-                FloatingRail(
-                    currentRoute = activeRoute,
-                    onSelect = { destination -> navigateTo(navController, destination.route) },
-                    modifier = Modifier.fillMaxHeight()
+        UnAnimeNavHost(
+            navController,
+            modifier = Modifier
+                .fillMaxSize()
+                .then(
+                    if (useRail && !playerFullscreen) {
+                        Modifier.padding(start = RailClearance)
+                    } else {
+                        Modifier
+                    }
                 )
-                UnAnimeNavHost(navController, modifier = Modifier.weight(1f))
-            }
-        } else {
-            UnAnimeNavHost(navController, modifier = Modifier.fillMaxSize())
-            FloatingBar(
+        )
+        if (useRail && !playerFullscreen) {
+            FloatingRail(
                 currentRoute = activeRoute,
                 onSelect = { destination -> navigateTo(navController, destination.route) },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .navigationBarsPadding()
-                    .padding(bottom = Spacing.lg)
+                modifier = Modifier.align(Alignment.CenterStart)
+            )
+        }
+        if (!useRail && !playerFullscreen) {
+            FloatingBar(
+                    currentRoute = activeRoute,
+                    onSelect = { destination -> navigateTo(navController, destination.route) },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .navigationBarsPadding()
+                        .padding(bottom = Spacing.lg)
             )
         }
     }
