@@ -54,6 +54,7 @@ import com.unanimetv.android.core.designsystem.theme.ThemeMode
 import com.unanimetv.android.core.designsystem.theme.ThemeStyle
 import com.unanimetv.android.core.designsystem.tokens.Spacing
 import com.unanimetv.android.ui.NotAnimeLogo
+import java.io.File
 
 private const val GITHUB_URL = "https://github.com/xzyyysh/UnAnime"
 
@@ -88,6 +89,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             onClear = {
                 context.imageLoader.memoryCache?.clear()
                 context.imageLoader.diskCache?.clear()
+                File(context.cacheDir, "downloads").deleteRecursively()
                 cacheCleared = true
             }
         )
@@ -344,7 +346,11 @@ private fun CacheCard(
     onClear: () -> Unit
 ) {
     val context = LocalContext.current
-    val sizeBytes = remember { context.imageLoader.diskCache?.size ?: 0L }
+    val sizeBytes = remember {
+        val downloads = File(context.cacheDir, "downloads")
+        val downloadsSize = downloads.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+        (context.imageLoader.diskCache?.size ?: 0L) + downloadsSize
+    }
     val sizeText = remember(sizeBytes) {
         val mb = sizeBytes / (1024.0 * 1024.0)
         if (mb >= 1.0) String.format("%.1f MB", mb) else "${sizeBytes / 1024} KB"
@@ -379,7 +385,7 @@ private fun CacheCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Caché de imágenes",
+                        text = "Caché",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
