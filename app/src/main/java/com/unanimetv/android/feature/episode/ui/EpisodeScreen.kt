@@ -281,16 +281,6 @@ private fun EpisodeContent(
                     onToggleFullscreen = { fullscreen = false },
                     modifier = Modifier.fillMaxSize()
                 )
-                IconButton(
-                    onClick = { fullscreen = false },
-                    modifier = Modifier.align(Alignment.TopStart).padding(Spacing.md)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_tabler_arrow_back),
-                        contentDescription = "Salir de pantalla completa",
-                        tint = Color.White
-                    )
-                }
             }
         }
     }

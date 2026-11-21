@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.ui.Modifier
 import com.unanimetv.android.core.designsystem.theme.ThemeController
 import com.unanimetv.android.core.designsystem.theme.UnAnimeTheme
@@ -18,7 +16,6 @@ import com.unanimetv.android.core.network.ApiClient
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 
-@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,13 +32,12 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val windowSizeClass = calculateWindowSizeClass(this)
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .navigationBarsPadding()
                     ) {
-                        UnAnimeApp(windowSizeClass.widthSizeClass)
+                        UnAnimeApp()
                     }
                 }
             }

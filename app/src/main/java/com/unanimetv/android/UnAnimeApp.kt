@@ -24,7 +24,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,7 +45,7 @@ import com.unanimetv.android.ui.CloudflareChallengeDialog
 private val ShellShape = RoundedCornerShape(28.dp)
 
 @Composable
-fun UnAnimeApp(windowWidthSizeClass: WindowWidthSizeClass) {
+fun UnAnimeApp() {
     val navController = rememberNavController()
     val challengeUrl by CloudflareGate.challengeUrl.collectAsState()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -57,7 +56,7 @@ fun UnAnimeApp(windowWidthSizeClass: WindowWidthSizeClass) {
             currentRoute.startsWith("episode?")
         )
     val activeRoute = if (isSubpage) TopLevelDestination.HOME.route else currentRoute
-    val useRail = windowWidthSizeClass != WindowWidthSizeClass.Compact
+    val useRail = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (useRail) {
