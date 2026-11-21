@@ -81,6 +81,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
 import com.notanime.es.extractor.StreamInfo
 import com.notanime.es.scraper.EpisodeEntry
 import com.notanime.es.scraper.EpisodeScreenshot
@@ -497,26 +498,37 @@ private fun ScreenshotPreview(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
+        var aspect by remember { mutableStateOf(16f / 9f) }
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.3f))
-                .clickable(onClick = onDismiss),
+                .background(Color.Black.copy(alpha = 0.3f)),
             contentAlignment = Alignment.Center
         ) {
-            AsyncImage(
-                model = screenshot.full,
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize()
-            )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            Box(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(Spacing.lg)
+                    .fillMaxSize()
+                    .aspectRatio(aspect)
             ) {
-                IconButton(
+                AsyncImage(
+                    model = screenshot.full,
+                    contentDescription = null,
+                    contentScale = ContentScale.FillBounds,
+                    onState = { state ->
+                        val size = (state as? AsyncImagePainter.State.Success)?.painter?.intrinsicSize
+                        if (size != null && size.width > 0 && size.height > 0) {
+                            aspect = size.width / size.height
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(Spacing.lg)
+                ) {
+                    IconButton(
                     onClick = {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
                             ContextCompat.checkSelfPermission(
@@ -546,6 +558,7 @@ private fun ScreenshotPreview(
                         contentDescription = "Cerrar",
                         tint = Color.White
                     )
+                }
                 }
             }
         }
