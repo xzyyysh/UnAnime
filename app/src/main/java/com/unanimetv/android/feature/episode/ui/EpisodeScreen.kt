@@ -5,6 +5,12 @@ import android.content.ComponentName
 import android.content.pm.ActivityInfo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.Home
@@ -41,6 +48,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -78,6 +86,7 @@ import androidx.media3.session.SessionToken
 import coil3.compose.AsyncImage
 import com.notanime.es.extractor.StreamInfo
 import com.notanime.es.scraper.EpisodeEntry
+import com.notanime.es.scraper.EpisodeScreenshot
 import com.notanime.es.scraper.SeasonEpisodes
 import com.notanime.es.scraper.SourceServer
 import com.notanime.es.util.UnAnimeLog
@@ -137,6 +146,7 @@ private fun EpisodeContent(
     var fullscreen by remember { mutableStateOf(false) }
     var qualityIndex by remember { mutableStateOf(0) }
     var loadedUrl by remember { mutableStateOf<String?>(null) }
+    var previewScreenshot by remember { mutableStateOf<EpisodeScreenshot?>(null) }
 
     val urlState by rememberUpdatedState(uiState.url)
 
@@ -349,12 +359,120 @@ private fun EpisodeContent(
             onTitleClick = onTitleClick,
             modifier = Modifier.padding(top = Spacing.md)
         )
+        if (uiState.gallery.isNotEmpty()) {
+            ScreenshotGallery(
+                screenshots = uiState.gallery,
+                onSelect = { previewScreenshot = it },
+                modifier = Modifier.padding(top = Spacing.lg)
+            )
+        }
         EpisodeList(
             seasons = uiState.seasons,
             currentUrl = uiState.url,
             onOpenEpisode = onOpenEpisode,
             modifier = Modifier.padding(top = Spacing.lg)
         )
+        previewScreenshot?.let { screenshot ->
+            ScreenshotPreview(
+                screenshot = screenshot,
+                onDismiss = { previewScreenshot = null }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScreenshotGallery(
+    screenshots: List<EpisodeScreenshot>,
+    onSelect: (EpisodeScreenshot) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val state = rememberLazyListState()
+    val current by remember { derivedStateOf { state.firstVisibleItemIndex } }
+    Column(modifier = modifier) {
+        Text(
+            text = "Galería",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        LazyRow(
+            state = state,
+            flingBehavior = rememberSnapFlingBehavior(lazyListState = state, snapPosition = SnapPosition.Center),
+            contentPadding = PaddingValues(horizontal = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+            modifier = Modifier.padding(top = Spacing.md)
+        ) {
+            items(count = screenshots.size) { index ->
+                val screenshot = screenshots[index]
+                AsyncImage(
+                    model = screenshot.thumb,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillParentMaxWidth(0.78f)
+                        .aspectRatio(16f / 9f)
+                        .clip(MaterialTheme.shapes.medium)
+                        .clickable(onClick = { onSelect(screenshot) })
+                )
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(top = Spacing.md)
+        ) {
+            repeat(screenshots.size) { index ->
+                Box(
+                    modifier = Modifier
+                        .size(width = if (index == current) 20.dp else 6.dp, height = 6.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (index == current) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
+                        )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScreenshotPreview(
+    screenshot: EpisodeScreenshot,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.3f))
+                .clickable(onClick = onDismiss),
+            contentAlignment = Alignment.Center
+        ) {
+            AsyncImage(
+                model = screenshot.full,
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize()
+            )
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(Spacing.lg)
+                    .background(Color.Black.copy(alpha = 0.45f), CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Close,
+                    contentDescription = "Cerrar",
+                    tint = Color.White
+                )
+            }
+        }
     }
 }
 
