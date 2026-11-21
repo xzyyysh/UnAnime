@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -39,7 +40,9 @@ import com.unanimetv.android.core.network.CloudflareGate
 import com.unanimetv.android.R
 import com.unanimetv.android.core.navigation.TopLevelDestination
 import com.unanimetv.android.core.navigation.UnAnimeNavHost
+import com.unanimetv.android.core.update.UpdateChecker
 import com.unanimetv.android.ui.CloudflareChallengeDialog
+import com.unanimetv.android.ui.UpdateDialog
 
 private val ShellShape = RoundedCornerShape(28.dp)
 
@@ -56,6 +59,9 @@ fun UnAnimeApp() {
         )
     val activeRoute = if (isSubpage) TopLevelDestination.HOME.route else currentRoute
     val playerFullscreen by com.unanimetv.android.core.playback.PlayerFullscreen.active.collectAsState()
+    val context = LocalContext.current
+    val pendingUpdate by UpdateChecker.update.collectAsState()
+    val updateDownload by UpdateChecker.download.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         UnAnimeNavHost(navController, modifier = Modifier.fillMaxSize())
@@ -75,6 +81,16 @@ fun UnAnimeApp() {
         CloudflareChallengeDialog(
             url = url,
             onDismiss = { CloudflareGate.dismiss() }
+        )
+    }
+
+    pendingUpdate?.let { pending ->
+        UpdateDialog(
+            currentVersion = com.unanimetv.android.core.BuildInfo.version,
+            update = pending,
+            download = updateDownload,
+            onRememberLater = { UpdateChecker.rememberLater(context) },
+            onDownload = { UpdateChecker.download(context) }
         )
     }
 }

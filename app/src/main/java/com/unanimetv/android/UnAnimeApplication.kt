@@ -14,6 +14,8 @@ import com.notanime.es.NotAnimeConfig
 import com.unanimetv.android.core.BuildInfo
 import com.unanimetv.android.core.designsystem.theme.ThemeController
 import com.unanimetv.android.core.network.ApiClient
+import com.unanimetv.android.core.update.UpdateChecker
+import java.io.File
 import com.notanime.es.util.UnAnimeLog
 import okhttp3.OkHttpClient
 import okio.Path.Companion.toPath
@@ -26,6 +28,8 @@ class UnAnimeApplication : Application(), SingletonImageLoader.Factory {
         BuildInfo.init(this)
         com.unanimetv.android.core.playback.PlaybackStore.init(this)
         ThemeController.init(this)
+        File(cacheDir, "update").deleteRecursively()
+        UpdateChecker.start(this)
     }
 
     override fun newImageLoader(context: Context): ImageLoader {

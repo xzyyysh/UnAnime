@@ -86,6 +86,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 context.imageLoader.memoryCache?.clear()
                 context.imageLoader.diskCache?.clear()
                 File(context.cacheDir, "downloads").deleteRecursively()
+                File(context.cacheDir, "update").deleteRecursively()
                 cacheCleared = true
             }
         )
@@ -345,7 +346,9 @@ private fun CacheCard(
     val sizeBytes = remember {
         val downloads = File(context.cacheDir, "downloads")
         val downloadsSize = downloads.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-        (context.imageLoader.diskCache?.size ?: 0L) + downloadsSize
+        val update = File(context.cacheDir, "update")
+        val updateSize = update.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+        (context.imageLoader.diskCache?.size ?: 0L) + downloadsSize + updateSize
     }
     val sizeText = remember(sizeBytes) {
         val mb = sizeBytes / (1024.0 * 1024.0)
