@@ -77,7 +77,8 @@ fun UnAnimeNavHost(
             val url = entry.arguments?.getString("url").orEmpty()
             EpisodeScreen(
                 url = url,
-                onTitleClick = { navController.navigate(titleRoute(it)) }
+                onTitleClick = { navController.navigate(titleRoute(it)) },
+                onBack = { navController.popBackStack() }
             )
         }
     }

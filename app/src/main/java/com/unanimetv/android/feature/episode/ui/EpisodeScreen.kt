@@ -26,11 +26,14 @@ import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -60,6 +63,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.text.AnnotatedString
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
@@ -89,6 +94,7 @@ private val ShellClearance = 120.dp
 fun EpisodeScreen(
     url: String,
     onTitleClick: (String) -> Unit = {},
+    onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val viewModel: EpisodeViewModel = viewModel(key = url) { EpisodeViewModel(url) }
@@ -103,6 +109,7 @@ fun EpisodeScreen(
         )
         else -> EpisodeContent(
             uiState = uiState,
+            onBack = onBack,
             onSelectLanguage = viewModel::selectLanguage,
             onSelectServer = viewModel::selectServer,
             onOpenEpisode = viewModel::openEpisode,
@@ -115,6 +122,7 @@ fun EpisodeScreen(
 @Composable
 private fun EpisodeContent(
     uiState: EpisodeUiState,
+    onBack: () -> Unit,
     onSelectLanguage: (String) -> Unit,
     onSelectServer: (SourceServer) -> Unit,
     onOpenEpisode: (String) -> Unit,
@@ -285,16 +293,31 @@ private fun EpisodeContent(
             .verticalScroll(scrollState)
             .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.lg, bottom = ShellClearance)
     ) {
-        Text(
-            text = uiState.title ?: "Episodio",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.clickable(enabled = uiState.titleUrl != null) {
-                uiState.titleUrl?.let(onTitleClick)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.Rounded.ArrowBack,
+                    contentDescription = "Volver",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
             }
-        )
+            Text(
+                text = uiState.title ?: "Episodio",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(enabled = uiState.titleUrl != null) {
+                        uiState.titleUrl?.let(onTitleClick)
+                    }
+            )
+            EpisodeTitleMenu(url = uiState.url)
+        }
         PlayerSurface(
             selectedServer = uiState.selectedServer,
             languages = uiState.languages,
@@ -332,6 +355,50 @@ private fun EpisodeContent(
             onOpenEpisode = onOpenEpisode,
             modifier = Modifier.padding(top = Spacing.lg)
         )
+    }
+}
+
+@Composable
+private fun EpisodeTitleMenu(url: String, modifier: Modifier = Modifier) {
+    var expanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+    Box(modifier = modifier) {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                imageVector = Icons.Rounded.MoreVert,
+                contentDescription = "Más opciones",
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            shape = MaterialTheme.shapes.medium
+        ) {
+            DropdownMenuItem(
+                text = { Text("Abrir en el navegador") },
+                onClick = {
+                    expanded = false
+                    runCatching {
+                        context.startActivity(
+                            android.content.Intent(
+                                android.content.Intent.ACTION_VIEW,
+                                android.net.Uri.parse(url)
+                            )
+                        )
+                    }
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Copiar enlace") },
+                onClick = {
+                    expanded = false
+                    clipboard.setText(AnnotatedString(url))
+                    Toast.makeText(context, "Enlace copiado", Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
     }
 }
 
