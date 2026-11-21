@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -56,38 +55,18 @@ fun UnAnimeApp() {
             currentRoute.startsWith("episode?")
         )
     val activeRoute = if (isSubpage) TopLevelDestination.HOME.route else currentRoute
-    val useRail = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600
-    val RailClearance = 112.dp
     val playerFullscreen by com.unanimetv.android.core.playback.PlayerFullscreen.active.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        UnAnimeNavHost(
-            navController,
-            modifier = Modifier
-                .fillMaxSize()
-                .then(
-                    if (useRail && !playerFullscreen) {
-                        Modifier.padding(start = RailClearance)
-                    } else {
-                        Modifier
-                    }
-                )
-        )
-        if (useRail && !playerFullscreen) {
-            FloatingRail(
+        UnAnimeNavHost(navController, modifier = Modifier.fillMaxSize())
+        if (!playerFullscreen) {
+            FloatingBar(
                 currentRoute = activeRoute,
                 onSelect = { destination -> navigateTo(navController, destination.route) },
-                modifier = Modifier.align(Alignment.CenterStart)
-            )
-        }
-        if (!useRail && !playerFullscreen) {
-            FloatingBar(
-                    currentRoute = activeRoute,
-                    onSelect = { destination -> navigateTo(navController, destination.route) },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .navigationBarsPadding()
-                        .padding(bottom = Spacing.lg)
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(bottom = Spacing.lg)
             )
         }
     }
@@ -138,39 +117,6 @@ private fun FloatingBar(
                     selected = currentRoute == destination.route,
                     onClick = { onSelect(destination) }
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun FloatingRail(
-    currentRoute: String?,
-    onSelect: (TopLevelDestination) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier.padding(start = Spacing.lg, top = Spacing.xxl, bottom = Spacing.xxl),
-        contentAlignment = Alignment.CenterStart
-    ) {
-        Surface(
-            shape = ShellShape,
-            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-            tonalElevation = 6.dp,
-            shadowElevation = 12.dp
-        ) {
-            Column(
-                modifier = Modifier.padding(vertical = Spacing.sm, horizontal = Spacing.sm),
-                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                TopLevelDestination.entries.forEach { destination ->
-                    ShellItemVertical(
-                        destination = destination,
-                        selected = currentRoute == destination.route,
-                        onClick = { onSelect(destination) }
-                    )
-                }
             }
         }
     }
@@ -232,38 +178,3 @@ private fun ShellItem(
     }
 }
 
-@Composable
-private fun ShellItemVertical(
-    destination: TopLevelDestination,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val pillColor by animateColorAsState(
-        targetValue = if (selected) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            Color.Transparent
-        },
-        animationSpec = tween(durationMillis = 250),
-        label = "shell-pill-vertical"
-    )
-    val contentColor = if (selected) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(androidx.compose.foundation.shape.CircleShape)
-            .background(pillColor)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            painter = painterResource(destination.iconRes),
-            contentDescription = destination.label,
-            tint = contentColor
-        )
-    }
-}
