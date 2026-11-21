@@ -1,8 +1,13 @@
 package com.unanimetv.android.feature.episode.ui
 
 import android.app.Activity
+import android.Manifest
 import android.content.ComponentName
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.SnapPosition
@@ -30,6 +35,7 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.Home
@@ -56,6 +62,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -71,6 +78,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.launch
 import androidx.compose.ui.text.AnnotatedString
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -93,6 +101,7 @@ import com.notanime.es.util.UnAnimeLog
 import com.unanimetv.android.core.designsystem.component.EmptyState
 import com.unanimetv.android.core.designsystem.component.LoadingState
 import com.unanimetv.android.core.designsystem.tokens.Spacing
+import com.unanimetv.android.core.media.ImageDownloader
 import com.unanimetv.android.core.playback.CurrentStream
 import com.unanimetv.android.core.playback.PlaybackStore
 import com.unanimetv.android.playback.PlaybackService
@@ -146,7 +155,7 @@ private fun EpisodeContent(
     var fullscreen by remember { mutableStateOf(false) }
     var qualityIndex by remember { mutableStateOf(0) }
     var loadedUrl by remember { mutableStateOf<String?>(null) }
-    var previewScreenshot by remember { mutableStateOf<EpisodeScreenshot?>(null) }
+    var previewIndex by remember { mutableStateOf<Int?>(null) }
 
     val urlState by rememberUpdatedState(uiState.url)
 
@@ -362,7 +371,7 @@ private fun EpisodeContent(
         if (uiState.gallery.isNotEmpty()) {
             ScreenshotGallery(
                 screenshots = uiState.gallery,
-                onSelect = { previewScreenshot = it },
+                onSelect = { previewIndex = it },
                 modifier = Modifier.padding(top = Spacing.lg)
             )
         }
@@ -372,10 +381,11 @@ private fun EpisodeContent(
             onOpenEpisode = onOpenEpisode,
             modifier = Modifier.padding(top = Spacing.lg)
         )
-        previewScreenshot?.let { screenshot ->
+        previewIndex?.let { index ->
             ScreenshotPreview(
-                screenshot = screenshot,
-                onDismiss = { previewScreenshot = null }
+                screenshot = uiState.gallery[index],
+                fileName = ImageDownloader.safeFileName(uiState.title ?: "episodio", index),
+                onDismiss = { previewIndex = null }
             )
         }
     }
@@ -384,7 +394,7 @@ private fun EpisodeContent(
 @Composable
 private fun ScreenshotGallery(
     screenshots: List<EpisodeScreenshot>,
-    onSelect: (EpisodeScreenshot) -> Unit,
+    onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state = rememberLazyListState()
@@ -412,7 +422,7 @@ private fun ScreenshotGallery(
                         .fillParentMaxWidth(0.78f)
                         .aspectRatio(16f / 9f)
                         .clip(MaterialTheme.shapes.medium)
-                        .clickable(onClick = { onSelect(screenshot) })
+                        .clickable(onClick = { onSelect(index) })
                 )
             }
         }
@@ -440,8 +450,27 @@ private fun ScreenshotGallery(
 @Composable
 private fun ScreenshotPreview(
     screenshot: EpisodeScreenshot,
+    fileName: String,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val download: () -> Unit = {
+        scope.launch {
+            runCatching { ImageDownloader.download(context, screenshot.full, fileName) }
+                .onSuccess {
+                    UnAnimeLog.d("download", "ok: $it")
+                    Toast.makeText(context, "Imagen descargada en Descargas", Toast.LENGTH_SHORT).show()
+                }
+                .onFailure {
+                    UnAnimeLog.e("download", "failed", it)
+                    Toast.makeText(context, "No se pudo descargar", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { if (it) download() }
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -459,18 +488,42 @@ private fun ScreenshotPreview(
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize()
             )
-            IconButton(
-                onClick = onDismiss,
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(Spacing.lg)
-                    .background(Color.Black.copy(alpha = 0.45f), CircleShape)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Close,
-                    contentDescription = "Cerrar",
-                    tint = Color.White
-                )
+                IconButton(
+                    onClick = {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+                            ContextCompat.checkSelfPermission(
+                                context, Manifest.permission.WRITE_EXTERNAL_STORAGE
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            download()
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        }
+                    },
+                    modifier = Modifier.background(Color.Black.copy(alpha = 0.45f), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Download,
+                        contentDescription = "Descargar",
+                        tint = Color.White
+                    )
+                }
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.background(Color.Black.copy(alpha = 0.45f), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Cerrar",
+                        tint = Color.White
+                    )
+                }
             }
         }
     }
