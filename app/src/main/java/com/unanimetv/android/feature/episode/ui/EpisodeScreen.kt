@@ -54,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -313,18 +314,18 @@ private fun EpisodeContent(
                 .fillMaxWidth()
                 .padding(top = Spacing.md)
         )
-        EpisodeList(
-            seasons = uiState.seasons,
-            currentUrl = uiState.url,
-            onOpenEpisode = onOpenEpisode,
-            modifier = Modifier.padding(top = Spacing.lg)
-        )
         EpisodeNavBar(
             prevUrl = uiState.prevUrl,
             nextUrl = uiState.nextUrl,
             titleUrl = uiState.titleUrl,
             onOpenEpisode = onOpenEpisode,
             onTitleClick = onTitleClick,
+            modifier = Modifier.padding(top = Spacing.md)
+        )
+        EpisodeList(
+            seasons = uiState.seasons,
+            currentUrl = uiState.url,
+            onOpenEpisode = onOpenEpisode,
             modifier = Modifier.padding(top = Spacing.lg)
         )
     }
@@ -350,6 +351,7 @@ private fun PlayerSurface(
     onToggleFullscreen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val picking = !started && (selectedServer == null || selectedServer.error != null)
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -366,6 +368,7 @@ private fun PlayerSurface(
             !started -> BackdropBanner(
                 backdropUrl = backdropUrl,
                 canPlay = stream != null,
+                resolving = resolvingUrl != null,
                 onPlay = onPlay
             )
             player != null && stream != null && !fullscreenActive -> PlayerVideo(
@@ -376,6 +379,7 @@ private fun PlayerSurface(
             fullscreenActive -> BackdropBanner(
                 backdropUrl = backdropUrl,
                 canPlay = false,
+                resolving = false,
                 onPlay = {}
             )
             player == null -> com.unanimetv.android.ui.NotAnimeLoader(
@@ -412,7 +416,7 @@ private fun PlayerSurface(
                 )
             }
         }
-        if (!started) {
+        if (picking) {
             ServerPicker(
                 languages = languages,
                 selectedLanguage = selectedLanguage,
@@ -431,8 +435,8 @@ private fun PlayerSurface(
                     .padding(Spacing.sm),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (languages.size > 1) {
-                    LanguageChip(
+                if (languages.isNotEmpty()) {
+                    LanguageSelector(
                         languages = languages,
                         selectedLanguage = selectedLanguage,
                         onSelectLanguage = onSelectLanguage
@@ -482,10 +486,11 @@ private fun ServerPicker(
         modifier = modifier
             .background(Color.Black.copy(alpha = 0.55f))
             .padding(Spacing.sm),
-        verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+        verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (languages.size > 1) {
-            LanguageChip(
+        if (languages.isNotEmpty()) {
+            LanguageSelector(
                 languages = languages,
                 selectedLanguage = selectedLanguage,
                 onSelectLanguage = onSelectLanguage
@@ -524,7 +529,7 @@ private fun ServerOptionCard(
     }
     Row(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxWidth(0.72f)
             .clip(MaterialTheme.shapes.small)
             .background(container)
             .clickable(onClick = onClick)
@@ -587,6 +592,7 @@ private fun ServerOptionCard(
 private fun BackdropBanner(
     backdropUrl: String?,
     canPlay: Boolean,
+    resolving: Boolean,
     onPlay: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -606,8 +612,14 @@ private fun BackdropBanner(
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.45f))
         )
-        if (canPlay) {
-            IconButton(
+        when {
+            resolving -> CircularProgressIndicator(
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(72.dp)
+            )
+            canPlay -> IconButton(
                 onClick = onPlay,
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -684,49 +696,41 @@ private fun QualityChip(
 }
 
 @Composable
-private fun LanguageChip(
+private fun LanguageSelector(
     languages: List<LanguageGroup>,
     selectedLanguage: String?,
     onSelectLanguage: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(modifier = modifier) {
-        Surface(
-            shape = MaterialTheme.shapes.small,
-            color = Color.Black.copy(alpha = 0.45f),
-            onClick = { expanded = true }
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)
+    Row(
+        modifier = modifier.horizontalScroll(rememberScrollState()),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+    ) {
+        languages.forEach { group ->
+            val selected = group.lang == selectedLanguage
+            Surface(
+                shape = androidx.compose.foundation.shape.CircleShape,
+                color = Color.Black.copy(alpha = 0.45f),
+                onClick = { onSelectLanguage(group.lang) },
+                modifier = Modifier.graphicsLayer { alpha = if (selected) 1f else 0.4f }
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Language,
-                    contentDescription = "Idioma",
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
-                Text(
-                    text = selectedLanguage?.let(::languageLabel) ?: "Auto",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.White,
-                    modifier = Modifier.padding(start = Spacing.xs)
-                )
-            }
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            languages.forEach { group ->
-                DropdownMenuItem(
-                    text = { Text(languageLabel(group.lang)) },
-                    onClick = {
-                        onSelectLanguage(group.lang)
-                        expanded = false
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(34.dp)
+                ) {
+                    val flag = languageFlag(group.lang)
+                    if (flag != null) {
+                        Text(text = flag, style = MaterialTheme.typography.headlineSmall)
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.Language,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
-                )
+                }
             }
         }
     }
@@ -902,13 +906,12 @@ private fun EpisodeNavBar(
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+        horizontalArrangement = Arrangement.Center
     ) {
         Button(
             onClick = { prevUrl?.let(onOpenEpisode) },
             enabled = prevUrl != null,
-            colors = ButtonDefaults.outlinedButtonColors(),
-            modifier = Modifier.weight(1f)
+            colors = ButtonDefaults.outlinedButtonColors()
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
@@ -916,6 +919,7 @@ private fun EpisodeNavBar(
             )
             Text("Anterior")
         }
+        Spacer(Modifier.width(Spacing.lg))
         IconButton(
             onClick = { titleUrl?.let(onTitleClick) },
             enabled = titleUrl != null,
@@ -931,11 +935,11 @@ private fun EpisodeNavBar(
                 contentDescription = "Ir al anime"
             )
         }
+        Spacer(Modifier.width(Spacing.lg))
         Button(
             onClick = { nextUrl?.let(onOpenEpisode) },
             enabled = nextUrl != null,
-            colors = ButtonDefaults.outlinedButtonColors(),
-            modifier = Modifier.weight(1f)
+            colors = ButtonDefaults.outlinedButtonColors()
         ) {
             Text("Siguiente")
             Icon(
@@ -946,9 +950,9 @@ private fun EpisodeNavBar(
     }
 }
 
-private fun languageLabel(lang: String): String = when (lang.uppercase()) {
-    "SUB" -> "Sub"
-    "LAT" -> "Latino"
-    "ES" -> "Castellano"
-    else -> lang
+private fun languageFlag(lang: String): String? = when (lang.uppercase()) {
+    "SUB" -> "🇯🇵"
+    "LAT" -> "🇲🇽"
+    "ES" -> "🇪🇸"
+    else -> null
 }
