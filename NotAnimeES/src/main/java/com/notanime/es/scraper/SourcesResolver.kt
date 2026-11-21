@@ -22,7 +22,8 @@ data class SourceServer(
     val skipReason: String?,
     val stream: StreamInfo?,
     val error: String?,
-    val icon: String = ""
+    val icon: String = "",
+    val description: String = ""
 )
 
 data class SourceGroup(
@@ -76,7 +77,8 @@ object SourcesResolver {
                     skipReason = skipReason,
                     stream = null,
                     error = null,
-                    icon = server.icon
+                    icon = server.icon,
+                    description = server.description
                 )
             )
         }
@@ -118,7 +120,8 @@ object SourcesResolver {
             skipReason = skipReason,
             stream = null,
             error = null,
-            icon = server.icon
+            icon = server.icon,
+            description = server.description
         )
         if (!resolvable) {
             UnAnimeLog.d("sources", "${server.name} skipped ($host): ${skipReason ?: "no resolver"}")

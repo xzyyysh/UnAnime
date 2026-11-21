@@ -412,44 +412,173 @@ private fun PlayerSurface(
                 )
             }
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.TopStart)
-                .padding(Spacing.sm),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (languages.size > 1) {
-                LanguageChip(
-                    languages = languages,
-                    selectedLanguage = selectedLanguage,
-                    onSelectLanguage = onSelectLanguage
-                )
-                Spacer(Modifier.width(Spacing.sm))
-            }
+        if (!started) {
+            ServerPicker(
+                languages = languages,
+                selectedLanguage = selectedLanguage,
+                servers = languages.firstOrNull { it.lang == selectedLanguage }?.servers.orEmpty(),
+                selectedServer = selectedServer,
+                resolvingUrl = resolvingUrl,
+                onSelectLanguage = onSelectLanguage,
+                onSelectServer = onSelectServer,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
             Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    .fillMaxWidth()
+                    .align(Alignment.TopStart)
+                    .padding(Spacing.sm),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                languages.firstOrNull { it.lang == selectedLanguage }?.servers?.forEach { server ->
-                    PlayerChip(
-                        server = server,
-                        selected = server == selectedServer,
-                        resolving = resolvingUrl == server.url,
-                        onClick = { onSelectServer(server) }
+                if (languages.size > 1) {
+                    LanguageChip(
+                        languages = languages,
+                        selectedLanguage = selectedLanguage,
+                        onSelectLanguage = onSelectLanguage
+                    )
+                    Spacer(Modifier.width(Spacing.sm))
+                }
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                ) {
+                    languages.firstOrNull { it.lang == selectedLanguage }?.servers?.forEach { server ->
+                        PlayerChip(
+                            server = server,
+                            selected = server == selectedServer,
+                            resolving = resolvingUrl == server.url,
+                            onClick = { onSelectServer(server) }
+                        )
+                    }
+                }
+                if ((stream?.qualities?.size ?: 0) > 1) {
+                    Spacer(Modifier.width(Spacing.sm))
+                    QualityChip(
+                        qualities = stream?.qualities.orEmpty(),
+                        selectedIndex = qualityIndex,
+                        onSelect = onSelectQuality
                     )
                 }
             }
-            if ((stream?.qualities?.size ?: 0) > 1) {
-                Spacer(Modifier.width(Spacing.sm))
-                QualityChip(
-                    qualities = stream?.qualities.orEmpty(),
-                    selectedIndex = qualityIndex,
-                    onSelect = onSelectQuality
+        }
+    }
+}
+
+@Composable
+private fun ServerPicker(
+    languages: List<LanguageGroup>,
+    selectedLanguage: String?,
+    servers: List<SourceServer>,
+    selectedServer: SourceServer?,
+    resolvingUrl: String?,
+    onSelectLanguage: (String) -> Unit,
+    onSelectServer: (SourceServer) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .background(Color.Black.copy(alpha = 0.55f))
+            .padding(Spacing.sm),
+        verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+    ) {
+        if (languages.size > 1) {
+            LanguageChip(
+                languages = languages,
+                selectedLanguage = selectedLanguage,
+                onSelectLanguage = onSelectLanguage
+            )
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+        ) {
+            servers.forEach { server ->
+                ServerOptionCard(
+                    server = server,
+                    selected = server == selectedServer,
+                    resolving = resolvingUrl == server.url,
+                    onClick = { onSelectServer(server) }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun ServerOptionCard(
+    server: SourceServer,
+    selected: Boolean,
+    resolving: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val container = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        Color.White.copy(alpha = 0.08f)
+    }
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
+            .background(container)
+            .clickable(onClick = onClick)
+            .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+    ) {
+        if (server.icon.isNotEmpty()) {
+            AsyncImage(
+                model = server.icon,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(22.dp)
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Rounded.PlayCircle,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = server.name,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    Color.White
+                },
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            val detail = server.description.ifEmpty {
+                server.error ?: server.skipReason.orEmpty()
+            }
+            if (detail.isNotEmpty()) {
+                Text(
+                    text = detail,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (selected) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        Color.White.copy(alpha = 0.7f)
+                    },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+        if (resolving) {
+            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
         }
     }
 }
@@ -568,12 +697,23 @@ private fun LanguageChip(
             color = Color.Black.copy(alpha = 0.45f),
             onClick = { expanded = true }
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Language,
-                contentDescription = "Idioma",
-                tint = Color.White,
-                modifier = Modifier.padding(Spacing.sm).size(20.dp)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Language,
+                    contentDescription = "Idioma",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = selectedLanguage?.let(::languageLabel) ?: "Auto",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White,
+                    modifier = Modifier.padding(start = Spacing.xs)
+                )
+            }
         }
         DropdownMenu(
             expanded = expanded,
@@ -686,13 +826,23 @@ private fun EpisodeRow(
     } else {
         MaterialTheme.colorScheme.surfaceContainer
     }
+    val onContainer = if (current) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+    val onContainerVariant = if (current) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
             .background(container)
             .clickable(onClick = onClick)
-            .padding(Spacing.md),
+            .padding(Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
@@ -706,24 +856,21 @@ private fun EpisodeRow(
                 .clip(MaterialTheme.shapes.small)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
         )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "${episode.season} - ${episode.episode}",
-                style = MaterialTheme.typography.labelMedium,
-                color = if (current) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.primary
-                }
-            )
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+        ) {
             Text(
                 text = episode.title.ifEmpty { "Episodio ${episode.episode}" },
                 style = MaterialTheme.typography.titleSmall,
-                color = if (current) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
+                color = onContainer,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = episodeDescription(episode),
+                style = MaterialTheme.typography.bodySmall,
+                color = onContainerVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -737,6 +884,11 @@ private fun EpisodeRow(
         }
     }
 }
+
+private fun episodeDescription(episode: EpisodeEntry): String = buildList {
+    add("Temporada ${episode.season} · Episodio ${episode.episode}")
+    episode.date?.let { add(it) }
+}.joinToString(" · ")
 
 @Composable
 private fun EpisodeNavBar(
