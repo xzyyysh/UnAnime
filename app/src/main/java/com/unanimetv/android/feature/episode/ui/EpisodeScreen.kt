@@ -25,15 +25,12 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Fullscreen
-import androidx.compose.material.icons.rounded.Hd
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -67,6 +64,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -212,6 +210,13 @@ private fun EpisodeContent(
         CurrentStream.currentUrl = qualityUrl
         val builder = MediaItem.Builder().setUri(qualityUrl)
         if (qualityUrl.contains(".m3u8")) builder.setMimeType(MimeTypes.APPLICATION_M3U8)
+        builder.setMediaMetadata(
+            MediaMetadata.Builder()
+                .setTitle(uiState.title ?: "Episodio")
+                .setArtist("UnAnime")
+                .setArtworkUri(uiState.image?.let(android.net.Uri::parse))
+                .build()
+        )
         UnAnimeLog.d("player", "prepare url=$qualityUrl resume=${position > 0}")
         c.setMediaItem(builder.build(), if (position > 0) position else C.TIME_UNSET)
         c.prepare()
@@ -304,7 +309,6 @@ private fun EpisodeContent(
             player = controller,
             onSelectLanguage = onSelectLanguage,
             onSelectServer = onSelectServer,
-            onSelectQuality = { qualityIndex = it },
             onPlay = {
                 controller?.playWhenReady = true
                 started = true
@@ -346,7 +350,6 @@ private fun PlayerSurface(
     player: Player?,
     onSelectLanguage: (String) -> Unit,
     onSelectServer: (SourceServer) -> Unit,
-    onSelectQuality: (Int) -> Unit,
     onPlay: () -> Unit,
     onToggleFullscreen: () -> Unit,
     modifier: Modifier = Modifier
@@ -427,46 +430,6 @@ private fun PlayerSurface(
                 onSelectServer = onSelectServer,
                 modifier = Modifier.fillMaxSize()
             )
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopStart)
-                    .padding(Spacing.sm),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (languages.isNotEmpty()) {
-                    LanguageSelector(
-                        languages = languages,
-                        selectedLanguage = selectedLanguage,
-                        onSelectLanguage = onSelectLanguage
-                    )
-                    Spacer(Modifier.width(Spacing.sm))
-                }
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
-                ) {
-                    languages.firstOrNull { it.lang == selectedLanguage }?.servers?.forEach { server ->
-                        PlayerChip(
-                            server = server,
-                            selected = server == selectedServer,
-                            resolving = resolvingUrl == server.url,
-                            onClick = { onSelectServer(server) }
-                        )
-                    }
-                }
-                if ((stream?.qualities?.size ?: 0) > 1) {
-                    Spacer(Modifier.width(Spacing.sm))
-                    QualityChip(
-                        qualities = stream?.qualities.orEmpty(),
-                        selectedIndex = qualityIndex,
-                        onSelect = onSelectQuality
-                    )
-                }
-            }
         }
     }
 }
@@ -637,65 +600,6 @@ private fun BackdropBanner(
 }
 
 @Composable
-private fun OverlayIconButton(
-    enabled: Boolean,
-    onClick: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    IconButton(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = Modifier
-            .size(36.dp)
-            .background(Color.Black.copy(alpha = 0.45f), androidx.compose.foundation.shape.CircleShape)
-    ) {
-        content()
-    }
-}
-
-@Composable
-private fun QualityChip(
-    qualities: List<com.notanime.es.extractor.StreamQuality>,
-    selectedIndex: Int,
-    onSelect: (Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(modifier = modifier) {
-        OverlayIconButton(enabled = true, onClick = { expanded = true }) {
-            Icon(
-                imageVector = Icons.Rounded.Hd,
-                contentDescription = "Calidad",
-                tint = Color.White
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            qualities.forEachIndexed { index, quality ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = quality.label + if (index == selectedIndex) " ✓" else "",
-                            color = if (index == selectedIndex) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurface
-                            }
-                        )
-                    },
-                    onClick = {
-                        onSelect(index)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun LanguageSelector(
     languages: List<LanguageGroup>,
     selectedLanguage: String?,
@@ -732,61 +636,6 @@ private fun LanguageSelector(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun PlayerChip(
-    server: SourceServer,
-    selected: Boolean,
-    resolving: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val container = if (selected) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        Color.Black.copy(alpha = 0.45f)
-    }
-    val content = if (selected) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        Color.White
-    }
-    Surface(
-        shape = MaterialTheme.shapes.small,
-        color = container,
-        contentColor = content,
-        onClick = onClick,
-        modifier = modifier
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
-            modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)
-        ) {
-            when {
-                resolving -> CircularProgressIndicator(
-                    modifier = Modifier.size(14.dp),
-                    strokeWidth = 2.dp
-                )
-                server.icon.isNotEmpty() -> AsyncImage(
-                    model = server.icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                else -> Icon(
-                    imageVector = Icons.Rounded.PlayCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-            Text(
-                text = server.name,
-                style = MaterialTheme.typography.labelMedium,
-                maxLines = 1
-            )
         }
     }
 }
