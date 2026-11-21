@@ -1,0 +1,287 @@
+package com.unanimetv.android.ui
+
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.LocalFireDepartment
+import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.Movie
+import androidx.compose.material.icons.rounded.PlayCircle
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SmartDisplay
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.TrendingUp
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.dp
+import com.unanimetv.android.core.designsystem.tokens.Spacing
+import com.unanimetv.android.feature.search.ui.SearchDialog
+import kotlinx.coroutines.launch
+
+@Composable
+fun AppChrome(
+    logoVariant: MutableIntState,
+    collapseProgress: () -> Float,
+    onTitleClick: (String) -> Unit,
+    onCatalogClick: (String, String) -> Unit,
+    modifier: Modifier = Modifier,
+    alwaysSolid: Boolean = false,
+    content: @Composable BoxScope.() -> Unit
+) {
+    val drawerState = androidx.compose.material3.rememberDrawerState(androidx.compose.material3.DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    var searchOpen by remember { mutableStateOf(false) }
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            AppDrawer(
+                logoVariant = logoVariant,
+                onCatalogClick = { path, title ->
+                    scope.launch { drawerState.close() }
+                    onCatalogClick(path, title)
+                }
+            )
+        }
+    ) {
+        Box(modifier = modifier.fillMaxSize()) {
+            content()
+            ChromeTopBar(
+                collapseProgress = collapseProgress,
+                alwaysSolid = alwaysSolid,
+                logoVariant = logoVariant,
+                onMenuClick = { scope.launch { drawerState.open() } },
+                onSearchClick = { searchOpen = true }
+            )
+        }
+        if (searchOpen) {
+            SearchDialog(
+                onDismiss = { searchOpen = false },
+                onResultClick = onTitleClick
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChromeTopBar(
+    collapseProgress: () -> Float,
+    alwaysSolid: Boolean,
+    logoVariant: MutableIntState,
+    onMenuClick: () -> Unit,
+    onSearchClick: () -> Unit
+) {
+    val progress = collapseProgress()
+    val barColor by animateColorAsState(
+        targetValue = when {
+            alwaysSolid -> MaterialTheme.colorScheme.surface
+            else -> MaterialTheme.colorScheme.surface.copy(alpha = progress)
+        },
+        animationSpec = tween(durationMillis = 300),
+        label = "chrome-topbar"
+    )
+    val chipAlpha = if (alwaysSolid) 0f else 1f - progress
+    val logoAlpha = if (alwaysSolid) 1f else progress
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(barColor)
+            .statusBarsPadding()
+            .padding(horizontal = Spacing.xs, vertical = Spacing.xs),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onMenuClick) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = chipAlpha)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Menu,
+                    contentDescription = "Menú",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = 1f - 0.1f * progress
+                        scaleY = 1f - 0.1f * progress
+                    }
+                )
+            }
+        }
+        Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            NotAnimeLogo(
+                variantState = logoVariant,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.graphicsLayer {
+                    alpha = logoAlpha
+                    scaleX = 0.8f + 0.2f * logoAlpha
+                    scaleY = 0.8f + 0.2f * logoAlpha
+                }
+            )
+        }
+        IconButton(onClick = onSearchClick) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = chipAlpha)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Search,
+                    contentDescription = "Buscar",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = 1f - 0.1f * progress
+                        scaleY = 1f - 0.1f * progress
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppDrawer(
+    logoVariant: MutableIntState,
+    onCatalogClick: (String, String) -> Unit
+) {
+    ModalDrawerSheet(
+        drawerContainerColor = MaterialTheme.colorScheme.background
+    ) {
+        Column(modifier = Modifier.statusBarsPadding().padding(vertical = Spacing.lg)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.lg, vertical = Spacing.md),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                NotAnimeLogo(variantState = logoVariant)
+            }
+            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.sm))
+            DrawerSection("Catálogos")
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Rounded.PlayCircle, contentDescription = null) },
+                label = { Text("Últimos episodios") },
+                selected = false,
+                onClick = { onCatalogClick("episodio", "Últimos episodios") }
+            )
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Rounded.SmartDisplay, contentDescription = null) },
+                label = { Text("Animes") },
+                selected = false,
+                onClick = { onCatalogClick("online", "Animes") }
+            )
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Rounded.Movie, contentDescription = null) },
+                label = { Text("Películas") },
+                selected = false,
+                onClick = { onCatalogClick("pelicula", "Películas") }
+            )
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Rounded.CalendarMonth, contentDescription = null) },
+                label = { Text("Temporadas") },
+                selected = false,
+                onClick = { onCatalogClick("temporada", "Temporadas") }
+            )
+            DrawerSection("Géneros")
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null) },
+                label = { Text("En emisión") },
+                selected = false,
+                onClick = { onCatalogClick("genero/en-emision-1", "En emisión") }
+            )
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Rounded.Block, contentDescription = null) },
+                label = { Text("Sin censura") },
+                selected = false,
+                onClick = { onCatalogClick("genero/sin-censura", "Sin censura") }
+            )
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Rounded.Language, contentDescription = null) },
+                label = { Text("Live Action") },
+                selected = false,
+                onClick = { onCatalogClick("genero/live-action", "Live Action") }
+            )
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Rounded.Schedule, contentDescription = null) },
+                label = { Text("Próximamente") },
+                selected = false,
+                onClick = { onCatalogClick("genero/proximamente", "Próximamente") }
+            )
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Rounded.Album, contentDescription = null) },
+                label = { Text("Blu-Ray / DVD") },
+                selected = false,
+                onClick = { onCatalogClick("genero/blu-ray-dvd-2", "Blu-Ray / DVD") }
+            )
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Rounded.EmojiEvents, contentDescription = null) },
+                label = { Text("Ganadores de premios") },
+                selected = false,
+                onClick = { onCatalogClick("genero/award-winning-anime", "Ganadores de premios") }
+            )
+            DrawerSection("Destacados")
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Rounded.TrendingUp, contentDescription = null) },
+                label = { Text("Popular en la web") },
+                selected = false,
+                onClick = { onCatalogClick("tendencias", "Popular en la web") }
+            )
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Rounded.Star, contentDescription = null) },
+                label = { Text("Mejores valorados") },
+                selected = false,
+                onClick = { onCatalogClick("ratings", "Mejores valorados") }
+            )
+        }
+    }
+}
+
+@Composable
+private fun DrawerSection(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.md)
+    )
+}

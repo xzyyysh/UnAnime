@@ -1,0 +1,3 @@
+<resources>
+    <style name="Theme.UnAnime" parent="android:Theme.Material.NoActionBar" />
+</resources>
