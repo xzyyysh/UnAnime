@@ -48,13 +48,6 @@ fun LinkMenu(
             if (onReload != null) {
                 DropdownMenuItem(
                     text = { Text("Recargar episodio") },
-                    leadingIcon = {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_tabler_refresh),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
                     onClick = {
                         expanded = false
                         onReload()
