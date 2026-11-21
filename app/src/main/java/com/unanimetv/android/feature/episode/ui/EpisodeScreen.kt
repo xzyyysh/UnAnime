@@ -127,7 +127,6 @@ private fun EpisodeContent(
 
     var controller by remember { mutableStateOf<MediaController?>(null) }
     var started by remember { mutableStateOf(false) }
-    var buffering by remember { mutableStateOf(false) }
     var fullscreen by remember { mutableStateOf(false) }
     var qualityIndex by remember { mutableStateOf(0) }
     var loadedUrl by remember { mutableStateOf<String?>(null) }
@@ -171,7 +170,6 @@ private fun EpisodeContent(
                     else -> "unknown"
                 }
                 UnAnimeLog.d("player", "state=$name")
-                buffering = state == Player.STATE_BUFFERING
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -252,7 +250,11 @@ private fun EpisodeContent(
                     .fillMaxSize()
                     .background(Color.Black)
             ) {
-                PlayerVideo(player = controller!!, modifier = Modifier.fillMaxSize())
+                PlayerVideo(
+                    player = controller!!,
+                    onToggleFullscreen = { fullscreen = false },
+                    modifier = Modifier.fillMaxSize()
+                )
                 IconButton(
                     onClick = { fullscreen = false },
                     modifier = Modifier.align(Alignment.TopStart).padding(Spacing.md)
@@ -296,7 +298,6 @@ private fun EpisodeContent(
             backdropUrl = uiState.image,
             started = started,
             fullscreenActive = fullscreen,
-            buffering = buffering,
             stream = stream,
             qualityIndex = safeQualityIndex,
             player = controller,
@@ -339,7 +340,6 @@ private fun PlayerSurface(
     backdropUrl: String?,
     started: Boolean,
     fullscreenActive: Boolean,
-    buffering: Boolean,
     stream: StreamInfo?,
     qualityIndex: Int,
     player: Player?,
@@ -370,6 +370,7 @@ private fun PlayerSurface(
             )
             player != null && stream != null && !fullscreenActive -> PlayerVideo(
                 player = player,
+                onToggleFullscreen = onToggleFullscreen,
                 modifier = Modifier.fillMaxSize()
             )
             fullscreenActive -> BackdropBanner(
@@ -447,17 +448,6 @@ private fun PlayerSurface(
                     qualities = stream?.qualities.orEmpty(),
                     selectedIndex = qualityIndex,
                     onSelect = onSelectQuality
-                )
-            }
-            Spacer(Modifier.width(Spacing.sm))
-            OverlayIconButton(
-                enabled = stream != null,
-                onClick = onToggleFullscreen
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Fullscreen,
-                    contentDescription = "Pantalla completa",
-                    tint = Color.White
                 )
             }
         }
