@@ -5,9 +5,11 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.notanime.es.util.UnAnimeLog
+import com.unanimetv.android.R
 import com.unanimetv.android.core.playback.CurrentStream
 
 class PlaybackService : MediaSessionService() {
@@ -17,6 +19,9 @@ class PlaybackService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
         UnAnimeLog.d("service", "created")
+        val notificationProvider = DefaultMediaNotificationProvider.Builder(this).build()
+        notificationProvider.setSmallIcon(R.drawable.ic_brand_mark)
+        setMediaNotificationProvider(notificationProvider)
         val player = ExoPlayer.Builder(this)
             .setSeekBackIncrementMs(15_000L)
             .setSeekForwardIncrementMs(15_000L)
@@ -52,11 +57,12 @@ class PlaybackService : MediaSessionService() {
         mediaSession
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        val player = mediaSession?.player
-        if (player == null || !player.playWhenReady || player.mediaItemCount == 0) {
-            UnAnimeLog.d("service", "task removed, stopping")
-            stopSelf()
+        UnAnimeLog.d("service", "task removed, stopping")
+        mediaSession?.player?.let { player ->
+            player.stop()
+            player.clearMediaItems()
         }
+        stopSelf()
     }
 
     override fun onDestroy() {
