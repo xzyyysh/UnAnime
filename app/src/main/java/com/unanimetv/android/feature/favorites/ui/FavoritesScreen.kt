@@ -6,24 +6,30 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,9 +42,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import com.unanimetv.android.R
 import com.unanimetv.android.core.designsystem.component.EmptyState
@@ -53,89 +62,152 @@ fun FavoritesScreen(
     modifier: Modifier = Modifier
 ) {
     val favorites by FavoritesStore.favorites.collectAsState()
-    val context = androidx.compose.ui.platform.LocalContext.current
-    androidx.compose.runtime.LaunchedEffect(Unit) { FavoritesStore.init(context) }
+    val context = LocalContext.current
+    LaunchedEffect(Unit) { FavoritesStore.init(context) }
     var selecting by remember { mutableStateOf(false) }
     val selected = remember { mutableListOf<String>().toMutableStateList() }
+    var confirmDelete by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Spacing.md, vertical = Spacing.sm)
+                .fillMaxSize()
+                .statusBarsPadding()
         ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_tabler_arrow_back),
-                    contentDescription = "Volver",
-                    tint = MaterialTheme.colorScheme.onSurface
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.md, vertical = Spacing.sm)
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_tabler_arrow_back),
+                        contentDescription = "Volver",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Text(
+                    text = if (selecting) "Seleccionados ${selected.size}" else "Favoritos",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-            }
-            Text(
-                text = if (selecting) "Seleccionados ${selected.size}" else "Favoritos",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(1f))
-            if (selecting) {
-                TextButton(
-                    onClick = {
-                        FavoritesStore.removeUrls(selected)
-                        selected.clear()
+                Spacer(modifier = Modifier.weight(1f))
+                if (selecting) {
+                    TextButton(onClick = {
                         selecting = false
-                    },
-                    enabled = selected.isNotEmpty()
+                        selected.clear()
+                    }) {
+                        Text(text = "Cancelar")
+                    }
+                } else if (favorites.isNotEmpty()) {
+                    TextButton(onClick = { selecting = true }) {
+                        Text(text = "Seleccionar")
+                    }
+                }
+            }
+            if (favorites.isEmpty()) {
+                EmptyState(
+                    message = "Sin favoritos aún. Agrega animes desde su página con el menú ⋮"
+                )
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    contentPadding = PaddingValues(
+                        start = Spacing.lg,
+                        end = Spacing.lg,
+                        bottom = 120.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.md),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Text(text = "Delete ${selected.size}")
-                }
-                TextButton(onClick = {
-                    selecting = false
-                    selected.clear()
-                }) {
-                    Text(text = "Cancelar")
-                }
-            } else if (favorites.isNotEmpty()) {
-                TextButton(onClick = { selecting = true }) {
-                    Text(text = "Seleccionar")
+                    items(favorites, key = { it.url }) { favorite ->
+                        FavoriteCard(
+                            favorite = favorite,
+                            selecting = selecting,
+                            selected = favorite.url in selected,
+                            onClick = {
+                                if (selecting) {
+                                    if (favorite.url in selected) selected.remove(favorite.url)
+                                    else selected.add(favorite.url)
+                                } else {
+                                    onTitleClick(favorite.url)
+                                }
+                            },
+                            onRemove = { FavoritesStore.remove(favorite.url) }
+                        )
+                    }
                 }
             }
         }
-        if (favorites.isEmpty()) {
-            EmptyState(
-                message = "Sin favoritos aún. Agrega animes desde su página con el menú ⋮"
-            )
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    start = Spacing.lg,
-                    end = Spacing.lg,
-                    bottom = 120.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(Spacing.md),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                modifier = Modifier.fillMaxSize()
+        if (selecting) {
+            Button(
+                onClick = { confirmDelete = true },
+                enabled = selected.isNotEmpty(),
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .navigationBarsPadding()
+                    .padding(end = Spacing.lg, bottom = Spacing.lg)
             ) {
-                items(favorites, key = { it.url }) { favorite ->
-                    FavoriteCard(
-                        favorite = favorite,
-                        selecting = selecting,
-                        selected = favorite.url in selected,
-                        onClick = {
-                            if (selecting) {
-                                if (favorite.url in selected) selected.remove(favorite.url)
-                                else selected.add(favorite.url)
-                            } else {
-                                onTitleClick(favorite.url)
-                            }
-                        },
-                        onRemove = { FavoritesStore.remove(favorite.url) }
-                    )
+                Text(text = "Delete ${selected.size}")
+            }
+        }
+    }
+    if (confirmDelete) {
+        DeleteConfirmDialog(
+            count = selected.size,
+            onConfirm = {
+                FavoritesStore.removeUrls(selected)
+                selected.clear()
+                selecting = false
+                confirmDelete = false
+            },
+            onDismiss = { confirmDelete = false }
+        )
+    }
+}
+
+@Composable
+private fun DeleteConfirmDialog(
+    count: Int,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            shape = MaterialTheme.shapes.large,
+            modifier = Modifier.padding(horizontal = 48.dp)
+        ) {
+            Column(modifier = Modifier.padding(Spacing.lg)) {
+                Text(
+                    text = "¿Eliminar favoritos?",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Se eliminarán $count favoritos.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = Spacing.xs)
+                )
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Spacing.md)
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(text = "Cancelar")
+                    }
+                    Button(onClick = onConfirm) {
+                        Text(text = "Eliminar")
+                    }
                 }
             }
         }

@@ -1,12 +1,38 @@
 package com.unanimetv.android.core.designsystem.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
+import com.unanimetv.android.R
 
-val AppTypography = Typography().withDefaultFontFamily(FontFamily.SansSerif)
+private val Unbounded = FontFamily(
+    Font(
+        resId = R.font.unbounded_variable,
+        weight = FontWeight.Normal,
+        variationSettings = FontVariation.Settings(FontVariation.weight(400))
+    ),
+    Font(
+        resId = R.font.unbounded_variable,
+        weight = FontWeight.Medium,
+        variationSettings = FontVariation.Settings(FontVariation.weight(500))
+    ),
+    Font(
+        resId = R.font.unbounded_variable,
+        weight = FontWeight.SemiBold,
+        variationSettings = FontVariation.Settings(FontVariation.weight(600))
+    ),
+    Font(
+        resId = R.font.unbounded_variable,
+        weight = FontWeight.Bold,
+        variationSettings = FontVariation.Settings(FontVariation.weight(700))
+    )
+)
 
-val BrandFont: FontFamily = FontFamily.Monospace
+val AppTypography = Typography().withDefaultFontFamily(Unbounded)
+
+val BrandFont: FontFamily = Unbounded
 
 private fun Typography.withDefaultFontFamily(family: FontFamily) = Typography(
     displayLarge = displayLarge.copy(fontFamily = family),
