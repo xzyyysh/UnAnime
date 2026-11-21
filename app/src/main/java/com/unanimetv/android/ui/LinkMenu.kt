@@ -26,7 +26,8 @@ fun LinkMenu(
     url: String,
     modifier: Modifier = Modifier,
     isFavorite: Boolean? = null,
-    onToggleFavorite: (() -> Unit)? = null
+    onToggleFavorite: (() -> Unit)? = null,
+    onReload: (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -44,6 +45,22 @@ fun LinkMenu(
             onDismissRequest = { expanded = false },
             shape = MaterialTheme.shapes.medium
         ) {
+            if (onReload != null) {
+                DropdownMenuItem(
+                    text = { Text("Recargar episodio") },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_tabler_refresh),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onReload()
+                    }
+                )
+            }
             if (isFavorite != null && onToggleFavorite != null) {
                 DropdownMenuItem(
                     text = { Text(if (isFavorite) "Quitar de favoritos" else "Agregar a favoritos") },

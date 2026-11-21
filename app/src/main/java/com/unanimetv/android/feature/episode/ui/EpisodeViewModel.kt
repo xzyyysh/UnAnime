@@ -72,6 +72,12 @@ class EpisodeViewModel(
         load()
     }
 
+    fun reload() {
+        resolveJob?.cancel()
+        _uiState.value = EpisodeUiState(url = currentUrl)
+        load()
+    }
+
     private fun load() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }

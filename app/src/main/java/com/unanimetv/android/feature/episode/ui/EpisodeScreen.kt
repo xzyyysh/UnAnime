@@ -122,6 +122,7 @@ fun EpisodeScreen(
             onSelectLanguage = viewModel::selectLanguage,
             onSelectServer = viewModel::selectServer,
             onOpenEpisode = viewModel::openEpisode,
+            onReload = viewModel::reload,
             onTitleClick = onTitleClick,
             modifier = modifier
         )
@@ -135,6 +136,7 @@ private fun EpisodeContent(
     onSelectLanguage: (String) -> Unit,
     onSelectServer: (SourceServer) -> Unit,
     onOpenEpisode: (String) -> Unit,
+    onReload: () -> Unit,
     onTitleClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -326,7 +328,18 @@ private fun EpisodeContent(
                         uiState.titleUrl?.let(onTitleClick)
                     }
             )
-            LinkMenu(url = uiState.url)
+            LinkMenu(
+                url = uiState.url,
+                onReload = {
+                    // streams die or get blocked mid-session, this forces a cold re-scrape and server re-pick
+                    started = false
+                    loadedUrl = null
+                    qualityIndex = 0
+                    controller?.stop()
+                    controller?.clearMediaItems()
+                    onReload()
+                }
+            )
         }
         PlayerSurface(
             selectedServer = uiState.selectedServer,
