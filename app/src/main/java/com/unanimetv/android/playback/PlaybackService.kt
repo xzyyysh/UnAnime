@@ -18,6 +18,8 @@ class PlaybackService : MediaSessionService() {
         super.onCreate()
         UnAnimeLog.d("service", "created")
         val player = ExoPlayer.Builder(this)
+            .setSeekBackIncrementMs(15_000L)
+            .setSeekForwardIncrementMs(15_000L)
             .setMediaSourceFactory(DefaultMediaSourceFactory(CurrentStream.dataSourceFactory(this)))
             .setAudioAttributes(
                 AudioAttributes.Builder()
