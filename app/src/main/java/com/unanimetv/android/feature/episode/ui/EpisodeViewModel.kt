@@ -43,7 +43,7 @@ class EpisodeViewModel(
         resolveJob = viewModelScope.launch {
             try {
                 val resolved = ApiClient.resolveServer(
-                    EmbedServer(name = server.name, lang = server.lang, url = server.url)
+                    EmbedServer(name = server.name, lang = server.lang, url = server.url, description = server.description)
                 )
                 _uiState.update { state ->
                     state.copy(
@@ -84,9 +84,9 @@ class EpisodeViewModel(
                 _uiState.value = EpisodeUiState(
                     isLoading = false,
                     url = currentUrl,
-                    title = entry?.title?.takeIf { it.isNotEmpty() },
+                    title = entry?.title?.takeIf { it.isNotEmpty() } ?: episode.title,
                     titleUrl = episode.nav.titleUrl?.absoluteUrl(),
-                    image = entry?.image?.takeIf { it.isNotEmpty() },
+                    image = episode.image ?: entry?.image?.takeIf { it.isNotEmpty() },
                     prevUrl = episode.nav.prev?.absoluteUrl(),
                     nextUrl = episode.nav.next?.absoluteUrl(),
                     languages = groups.map { LanguageGroup(it.lang, it.servers) },

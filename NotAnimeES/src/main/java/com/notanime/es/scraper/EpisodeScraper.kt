@@ -15,7 +15,8 @@ data class EmbedServer(
     val name: String,
     val lang: String,
     val url: String,
-    val icon: String = ""
+    val icon: String = "",
+    val description: String = ""
 )
 
 data class EpisodeNav(
@@ -31,7 +32,9 @@ data class EpisodeData(
     val nav: EpisodeNav,
     val seasonEpisodes: List<SeasonEpisodes>,
     val embedUrl: String?,
-    val embedServers: List<EmbedServer>
+    val embedServers: List<EmbedServer>,
+    val image: String? = null,
+    val title: String? = null
 )
 
 object EpisodeScraper {
@@ -39,8 +42,7 @@ object EpisodeScraper {
     private val playerUrlRegex = Regex("go_to_player\\('([^']+)'\\)")
     private val odClassRegex = Regex("\\s+")
 
-    fun parseEpisodePage(html: String): Triple<Int, String, Pair<List<ServerOption>, EpisodeNav>> {
-        val doc = Jsoup.parse(html)
+    fun parseEpisodePage(doc: Document): Triple<Int, String, Pair<List<ServerOption>, EpisodeNav>> {
         val first = doc.selectFirst("li.dooplay_player_option")
         val postId = first?.attr("data-post")?.toIntOrNull() ?: 0
         val type = first?.attr("data-type") ?: "tv"
@@ -82,23 +84,38 @@ object EpisodeScraper {
             }
             val url = playerUrlRegex.find(el.attr("onclick"))?.groupValues?.get(1)
             val name = el.selectFirst("span")?.text()?.trim().orEmpty()
+            val description = el.selectFirst("p")?.text()?.trim().orEmpty()
             val icon = el.selectFirst("img")?.attr("src").orEmpty()
             val iconUrl = if (icon.startsWith("http") || icon.isEmpty()) {
                 icon
             } else {
                 runCatching { java.net.URI(embedUrl).resolve(icon).toString() }.getOrDefault(icon)
             }
-            if (url != null) servers.add(EmbedServer(name, lang, url, iconUrl))
+            if (url != null) servers.add(EmbedServer(name, lang, url, iconUrl, description))
         }
         return servers
     }
 
+    private val ogTitleSiteSuffixRegex = Regex("\\|\\s*[^|]+$")
+    private val ogTitleTagRegex = Regex("【[^】]*】")
+
+    fun cleanOgTitle(raw: String): String = raw
+        .replace(ogTitleTagRegex, " ")
+        .replace(ogTitleSiteSuffixRegex, "")
+        .replace("▷", " ")
+        .replace(odClassRegex, " ")
+        .trim()
+
     suspend fun getEpisode(fetcher: Fetcher, episodeUrl: String): EpisodeData {
         val html = fetcher.html(episodeUrl)
-        val (postId, type, serversAndNav) = parseEpisodePage(html)
+        val doc = Jsoup.parse(html)
+        val (postId, type, serversAndNav) = parseEpisodePage(doc)
         if (postId == 0) throw IllegalStateException("postId not found for $episodeUrl")
         val (servers, nav) = serversAndNav
-        val seasonEpisodes = TitleScraper.parseSeasonBoxes(Jsoup.parse(html))
+        val seasonEpisodes = TitleScraper.parseSeasonBoxes(doc)
+        val image = doc.selectFirst("meta[property=og:image]")?.attr("content")?.trim()?.takeIf { it.isNotEmpty() }
+        val title = doc.selectFirst("meta[property=og:title]")?.attr("content")
+            ?.let(::cleanOgTitle)?.takeIf { it.isNotEmpty() }
         UnAnimeLog.d("episode", "postId=$postId type=$type servers=${servers.size}")
         var embedUrl: String? = null
         try {
@@ -123,6 +140,6 @@ object EpisodeScraper {
         } else {
             emptyList()
         }
-        return EpisodeData(postId, type, servers, nav, seasonEpisodes, embedUrl, embedServers)
+        return EpisodeData(postId, type, servers, nav, seasonEpisodes, embedUrl, embedServers, image, title)
     }
 }
