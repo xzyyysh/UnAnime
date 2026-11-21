@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,9 +19,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Tab
@@ -33,21 +35,25 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.notanime.es.scraper.TitleData
+import com.unanimetv.android.R
 import com.unanimetv.android.core.designsystem.component.EmptyState
 import com.unanimetv.android.core.designsystem.component.LoadingState
 import com.unanimetv.android.core.designsystem.component.StatusBadge
 import com.unanimetv.android.core.designsystem.tokens.Spacing
+import com.unanimetv.android.ui.LinkMenu
 
 @Composable
 fun TitleScreen(
     url: String,
     onEpisodeClick: (String) -> Unit,
+    onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val viewModel: TitleViewModel = viewModel(key = url) { TitleViewModel(url) }
@@ -56,12 +62,13 @@ fun TitleScreen(
     when {
         uiState.isLoading -> LoadingState(modifier = modifier)
         uiState.error != null -> EmptyState(
-            icon = Icons.Rounded.ErrorOutline,
+            icon = painterResource(R.drawable.ic_tabler_alert_circle),
             message = uiState.error.orEmpty(),
             modifier = modifier
         )
         else -> TitleContent(
             data = uiState.data,
+            onBack = onBack,
             onEpisodeClick = onEpisodeClick,
             modifier = modifier
         )
@@ -71,6 +78,7 @@ fun TitleScreen(
 @Composable
 private fun TitleContent(
     data: TitleData?,
+    onBack: () -> Unit,
     onEpisodeClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -86,6 +94,22 @@ private fun TitleContent(
             .verticalScroll(rememberScrollState())
             .padding(Spacing.lg)
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_tabler_arrow_back),
+                    contentDescription = "Volver",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            LinkMenu(url = data.url)
+        }
         Header(data = data)
         if (data.genres.isNotEmpty()) {
             GenreRow(data = data, modifier = Modifier.padding(top = Spacing.md))
