@@ -91,7 +91,8 @@ class EpisodeViewModel(
                     nextUrl = episode.nav.next?.absoluteUrl(),
                     languages = groups.map { LanguageGroup(it.lang, it.servers) },
                     selectedLanguage = groups.firstOrNull()?.lang,
-                    seasons = episode.seasonEpisodes
+                    seasons = episode.seasonEpisodes,
+                    gallery = episode.gallery
                 )
             } catch (e: Exception) {
                 _uiState.update {

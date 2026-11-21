@@ -25,6 +25,11 @@ data class EpisodeNav(
     val titleUrl: String?
 )
 
+data class EpisodeScreenshot(
+    val thumb: String,
+    val full: String
+)
+
 data class EpisodeData(
     val postId: Int,
     val type: String,
@@ -34,7 +39,8 @@ data class EpisodeData(
     val embedUrl: String?,
     val embedServers: List<EmbedServer>,
     val image: String? = null,
-    val title: String? = null
+    val title: String? = null,
+    val gallery: List<EpisodeScreenshot> = emptyList()
 )
 
 object EpisodeScraper {
@@ -106,6 +112,15 @@ object EpisodeScraper {
         .replace(odClassRegex, " ")
         .trim()
 
+    fun parseGallery(doc: Document): List<EpisodeScreenshot> =
+        doc.select("#dt_galery .g-item").mapNotNull { item ->
+            val a = item.selectFirst("a") ?: return@mapNotNull null
+            val img = item.selectFirst("img") ?: return@mapNotNull null
+            val full = a.attr("href").trim().takeIf { it.startsWith("http") } ?: return@mapNotNull null
+            val thumb = img.attr("data-src").trim().takeIf { it.startsWith("http") } ?: full
+            EpisodeScreenshot(thumb = thumb, full = full)
+        }
+
     suspend fun getEpisode(fetcher: Fetcher, episodeUrl: String): EpisodeData {
         val html = fetcher.html(episodeUrl)
         val doc = Jsoup.parse(html)
@@ -140,6 +155,6 @@ object EpisodeScraper {
         } else {
             emptyList()
         }
-        return EpisodeData(postId, type, servers, nav, seasonEpisodes, embedUrl, embedServers, image, title)
+        return EpisodeData(postId, type, servers, nav, seasonEpisodes, embedUrl, embedServers, image, title, parseGallery(doc))
     }
 }

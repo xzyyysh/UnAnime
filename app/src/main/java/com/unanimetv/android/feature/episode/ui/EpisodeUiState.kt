@@ -1,5 +1,6 @@
 package com.unanimetv.android.feature.episode.ui
 
+import com.notanime.es.scraper.EpisodeScreenshot
 import com.notanime.es.scraper.SeasonEpisodes
 import com.notanime.es.scraper.SourceServer
 
@@ -16,7 +17,8 @@ data class EpisodeUiState(
     val selectedLanguage: String? = null,
     val selectedServer: SourceServer? = null,
     val resolvingUrl: String? = null,
-    val seasons: List<SeasonEpisodes> = emptyList()
+    val seasons: List<SeasonEpisodes> = emptyList(),
+    val gallery: List<EpisodeScreenshot> = emptyList()
 )
 
 data class LanguageGroup(
