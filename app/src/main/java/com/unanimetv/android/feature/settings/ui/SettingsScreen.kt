@@ -46,6 +46,7 @@ import coil3.imageLoader
 import com.unanimetv.android.R
 import com.unanimetv.android.core.BuildInfo
 import com.unanimetv.android.core.designsystem.theme.ThemeController
+import com.unanimetv.android.core.update.UpdateChecker
 import com.unanimetv.android.core.designsystem.theme.ThemeMode
 import com.unanimetv.android.core.designsystem.theme.ThemeStyle
 import com.unanimetv.android.core.designsystem.tokens.Spacing
@@ -90,6 +91,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 cacheCleared = true
             }
         )
+        Spacer(modifier = Modifier.height(Spacing.lg))
+        UpdateCard()
         Spacer(modifier = Modifier.height(Spacing.lg))
         AboutCard()
         Spacer(modifier = Modifier.height(Spacing.md))
@@ -330,6 +333,70 @@ private fun ThemeDropdown(
                             onSelect(option)
                             expanded = false
                         }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpdateCard() {
+    val context = LocalContext.current
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        shape = MaterialTheme.shapes.large,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(Spacing.lg)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+            ) {
+                Icon(
+                    painterResource(R.drawable.ic_tabler_refresh),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Actualización",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Spacer(modifier = Modifier.height(Spacing.md))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Versión actual",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = BuildInfo.version,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    shape = RoundedCornerShape(50),
+                    modifier = Modifier.clickable {
+                        UpdateChecker.checkNow(context)
+                    }
+                ) {
+                    Text(
+                        text = "Buscar",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm)
                     )
                 }
             }

@@ -63,6 +63,24 @@ object UpdateChecker {
         }
     }
 
+    fun checkNow(context: Context) {
+        val appContext = context.applicationContext
+        scope.launch {
+            val latest = runCatching { fetchLatest() }
+                .onFailure { UnAnimeLog.w("update", "manual check failed: ${it.message}") }
+                .getOrNull()
+            when {
+                latest == null -> toast(appContext, "No se pudo verificar actualizaciones")
+                !isNewer(latest.version, com.unanimetv.android.core.BuildInfo.version) ->
+                    toast(appContext, "Estás en la última versión (${com.unanimetv.android.core.BuildInfo.version})")
+                else -> {
+                    UnAnimeLog.i("update", "manual check: update available ${latest.version}")
+                    _update.value = latest
+                }
+            }
+        }
+    }
+
     fun rememberLater(context: Context) {
         val current = _update.value ?: return
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -124,6 +142,10 @@ object UpdateChecker {
 
     fun clearDownloadState() {
         _download.value = Download.Idle
+    }
+
+    private fun toast(context: Context, message: String) {
+        android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
     }
 
     private fun install(context: Context, apk: File) {

@@ -67,8 +67,9 @@ class EpisodeViewModel(
 
     fun openEpisode(url: String) {
         if (url == currentUrl) return
-        currentUrl = url
         resolveJob?.cancel()
+        currentUrl = url
+        _uiState.value = EpisodeUiState(url = url)
         load()
     }
 

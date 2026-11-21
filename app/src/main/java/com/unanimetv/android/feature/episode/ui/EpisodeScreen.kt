@@ -271,6 +271,16 @@ private fun EpisodeContent(
     }
 
     LaunchedEffect(uiState.url) {
+        val c = controller
+        val previous = loadedUrl
+        if (c != null && previous != null && previous != uiState.url && c.currentMediaItem != null) {
+            PlaybackStore.put(previous, c.currentPosition)
+        }
+        started = false
+        loadedUrl = null
+        qualityIndex = 0
+        controller?.stop()
+        controller?.clearMediaItems()
         scrollState.animateScrollTo(0)
     }
 
