@@ -67,6 +67,7 @@ fun FavoritesScreen(
     var selecting by remember { mutableStateOf(false) }
     val selected = remember { mutableListOf<String>().toMutableStateList() }
     var confirmDelete by remember { mutableStateOf(false) }
+    var pendingRemove by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -135,7 +136,7 @@ fun FavoritesScreen(
                                     onTitleClick(favorite.url)
                                 }
                             },
-                            onRemove = { FavoritesStore.remove(favorite.url) }
+                            onRemove = { pendingRemove = favorite.url }
                         )
                     }
                 }
@@ -167,6 +168,16 @@ fun FavoritesScreen(
             onDismiss = { confirmDelete = false }
         )
     }
+    pendingRemove?.let { url ->
+        DeleteConfirmDialog(
+            count = 1,
+            onConfirm = {
+                FavoritesStore.remove(url)
+                pendingRemove = null
+            },
+            onDismiss = { pendingRemove = null }
+        )
+    }
 }
 
 @Composable
@@ -191,7 +202,7 @@ private fun DeleteConfirmDialog(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Se eliminarán $count favoritos.",
+                    text = if (count == 1) "Se eliminará 1 favorito." else "Se eliminarán $count favoritos.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = Spacing.xs)
