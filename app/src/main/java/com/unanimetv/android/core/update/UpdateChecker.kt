@@ -145,7 +145,9 @@ object UpdateChecker {
     }
 
     private fun toast(context: Context, message: String) {
-        android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun install(context: Context, apk: File) {
