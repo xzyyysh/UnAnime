@@ -147,15 +147,21 @@ private fun ChromeTopBar(
             modifier = Modifier.weight(1f),
             contentAlignment = Alignment.Center
         ) {
-            NotAnimeLogo(
-                variantState = logoVariant,
-                style = MaterialTheme.typography.titleLarge,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Spacing.sm),
                 modifier = Modifier.graphicsLayer {
                     alpha = logoAlpha
                     scaleX = 0.8f + 0.2f * logoAlpha
                     scaleY = 0.8f + 0.2f * logoAlpha
                 }
-            )
+            ) {
+                BrandMark(size = 26.dp)
+                NotAnimeLogo(
+                    variantState = logoVariant,
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
         }
         IconButton(onClick = onSearchClick) {
             Box(
@@ -194,7 +200,13 @@ private fun AppDrawer(
                     .padding(horizontal = Spacing.lg, vertical = Spacing.md),
                 contentAlignment = Alignment.CenterStart
             ) {
-                NotAnimeLogo(variantState = logoVariant)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Spacing.md)
+                ) {
+                    BrandMark(size = 40.dp)
+                    NotAnimeLogo(variantState = logoVariant)
+                }
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.sm))
             DrawerSection("Catálogos")

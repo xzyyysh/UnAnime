@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -64,6 +65,7 @@ import com.unanimetv.android.core.designsystem.component.PosterCard
 import com.unanimetv.android.core.designsystem.component.SectionHeader
 import com.unanimetv.android.core.designsystem.tokens.Spacing
 import com.unanimetv.android.ui.AppChrome
+import com.unanimetv.android.ui.BrandMark
 import com.unanimetv.android.ui.NotAnimeLogo
 import com.unanimetv.android.ui.rememberNotAnimeLogoVariant
 
@@ -158,18 +160,21 @@ private fun HomeGrid(
         horizontalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
-            Box(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
                     .padding(top = Spacing.lg),
-                contentAlignment = Alignment.Center
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
+                BrandMark(
+                    size = 30.dp,
+                    modifier = Modifier.graphicsLayer { alpha = 1f - collapseProgress }
+                )
                 NotAnimeLogo(
                     variantState = logoVariant,
-                    modifier = Modifier.graphicsLayer {
-                        alpha = 1f - collapseProgress
-                    }
+                    modifier = Modifier.graphicsLayer { alpha = 1f - collapseProgress }
                 )
             }
         }

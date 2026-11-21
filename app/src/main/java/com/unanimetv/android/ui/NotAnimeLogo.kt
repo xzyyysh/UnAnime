@@ -8,6 +8,8 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.unanimetv.android.R
 import com.unanimetv.android.core.designsystem.theme.BrandFont
 
 private val I_VARIANTS = listOf("i", "í", "1", "!", "|", "ï", "î")
@@ -36,6 +39,16 @@ fun rememberNotAnimeLogoVariant(): androidx.compose.runtime.MutableIntState {
         }
     }
     return state
+}
+
+@Composable
+fun BrandMark(modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = androidx.compose.ui.unit.Dp.Unspecified) {
+    Icon(
+        painter = androidx.compose.ui.res.painterResource(R.drawable.ic_brand_mark),
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.primary,
+        modifier = if (size == androidx.compose.ui.unit.Dp.Unspecified) modifier else modifier.then(Modifier.size(size))
+    )
 }
 
 @Composable
