@@ -30,23 +30,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Download
-import androidx.compose.material.icons.rounded.ErrorOutline
-import androidx.compose.material.icons.rounded.Fullscreen
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.Language
-import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -73,13 +59,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
-import androidx.compose.ui.text.AnnotatedString
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -98,12 +84,14 @@ import com.notanime.es.scraper.EpisodeScreenshot
 import com.notanime.es.scraper.SeasonEpisodes
 import com.notanime.es.scraper.SourceServer
 import com.notanime.es.util.UnAnimeLog
+import com.unanimetv.android.R
 import com.unanimetv.android.core.designsystem.component.EmptyState
 import com.unanimetv.android.core.designsystem.component.LoadingState
 import com.unanimetv.android.core.designsystem.tokens.Spacing
 import com.unanimetv.android.core.media.ImageDownloader
 import com.unanimetv.android.core.playback.CurrentStream
 import com.unanimetv.android.core.playback.PlaybackStore
+import com.unanimetv.android.ui.LinkMenu
 import com.unanimetv.android.playback.PlaybackService
 
 private val ShellClearance = 120.dp
@@ -121,7 +109,7 @@ fun EpisodeScreen(
     when {
         uiState.isLoading && uiState.seasons.isEmpty() -> LoadingState(modifier = modifier)
         uiState.error != null && uiState.seasons.isEmpty() -> EmptyState(
-            icon = Icons.Rounded.ErrorOutline,
+            icon = painterResource(R.drawable.ic_tabler_alert_circle),
             message = uiState.error.orEmpty(),
             modifier = modifier
         )
@@ -293,7 +281,7 @@ private fun EpisodeContent(
                     modifier = Modifier.align(Alignment.TopStart).padding(Spacing.md)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.ArrowBack,
+                        painter = painterResource(R.drawable.ic_tabler_arrow_back),
                         contentDescription = "Salir de pantalla completa",
                         tint = Color.White
                     )
@@ -318,7 +306,7 @@ private fun EpisodeContent(
         ) {
             IconButton(onClick = onBack) {
                 Icon(
-                    imageVector = Icons.Rounded.ArrowBack,
+                    painter = painterResource(R.drawable.ic_tabler_arrow_back),
                     contentDescription = "Volver",
                     tint = MaterialTheme.colorScheme.onSurface
                 )
@@ -335,7 +323,7 @@ private fun EpisodeContent(
                         uiState.titleUrl?.let(onTitleClick)
                     }
             )
-            EpisodeTitleMenu(url = uiState.url)
+            LinkMenu(url = uiState.url)
         }
         PlayerSurface(
             selectedServer = uiState.selectedServer,
@@ -509,7 +497,7 @@ private fun ScreenshotPreview(
                     modifier = Modifier.background(Color.Black.copy(alpha = 0.45f), CircleShape)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Download,
+                        painter = painterResource(R.drawable.ic_tabler_download),
                         contentDescription = "Descargar",
                         tint = Color.White
                     )
@@ -519,56 +507,12 @@ private fun ScreenshotPreview(
                     modifier = Modifier.background(Color.Black.copy(alpha = 0.45f), CircleShape)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Close,
+                        painter = painterResource(R.drawable.ic_tabler_x),
                         contentDescription = "Cerrar",
                         tint = Color.White
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun EpisodeTitleMenu(url: String, modifier: Modifier = Modifier) {
-    var expanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
-    Box(modifier = modifier) {
-        IconButton(onClick = { expanded = true }) {
-            Icon(
-                imageVector = Icons.Rounded.MoreVert,
-                contentDescription = "Más opciones",
-                tint = MaterialTheme.colorScheme.onSurface
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            shape = MaterialTheme.shapes.medium
-        ) {
-            DropdownMenuItem(
-                text = { Text("Abrir en el navegador") },
-                onClick = {
-                    expanded = false
-                    runCatching {
-                        context.startActivity(
-                            android.content.Intent(
-                                android.content.Intent.ACTION_VIEW,
-                                android.net.Uri.parse(url)
-                            )
-                        )
-                    }
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("Copiar enlace") },
-                onClick = {
-                    expanded = false
-                    clipboard.setText(AnnotatedString(url))
-                    Toast.makeText(context, "Enlace copiado", Toast.LENGTH_SHORT).show()
-                }
-            )
         }
     }
 }
@@ -629,7 +573,7 @@ private fun PlayerSurface(
             )
             selectedServer == null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
-                    imageVector = Icons.Rounded.PlayCircle,
+                    painter = painterResource(R.drawable.ic_tabler_player_play),
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(48.dp)
@@ -643,7 +587,7 @@ private fun PlayerSurface(
             }
             stream == null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
-                    imageVector = Icons.Rounded.ErrorOutline,
+                    painter = painterResource(R.drawable.ic_tabler_alert_circle),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(48.dp)
@@ -748,7 +692,7 @@ private fun ServerOptionCard(
             )
         } else {
             Icon(
-                imageVector = Icons.Rounded.PlayCircle,
+                painter = painterResource(R.drawable.ic_tabler_player_play),
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier.size(18.dp)
@@ -827,7 +771,7 @@ private fun BackdropBanner(
                     .size(72.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.PlayCircle,
+                    painter = painterResource(R.drawable.ic_tabler_player_play),
                     contentDescription = "Reproducir",
                     tint = Color.White,
                     modifier = Modifier.size(72.dp)
@@ -866,7 +810,7 @@ private fun LanguageSelector(
                         Text(text = flag, style = MaterialTheme.typography.headlineSmall)
                     } else {
                         Icon(
-                            imageVector = Icons.Rounded.Language,
+                            painter = painterResource(R.drawable.ic_tabler_world),
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(18.dp)
@@ -968,7 +912,7 @@ private fun EpisodeRow(
         }
         if (current) {
             Icon(
-                imageVector = Icons.Rounded.PlayCircle,
+                painter = painterResource(R.drawable.ic_tabler_player_play),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -1001,7 +945,7 @@ private fun EpisodeNavBar(
             colors = ButtonDefaults.outlinedButtonColors()
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                painter = painterResource(R.drawable.ic_tabler_chevron_left),
                 contentDescription = null
             )
             Text("Anterior")
@@ -1018,7 +962,7 @@ private fun EpisodeNavBar(
             )
         ) {
             Icon(
-                imageVector = Icons.Rounded.Home,
+                painter = painterResource(R.drawable.ic_tabler_home),
                 contentDescription = "Ir al anime"
             )
         }
@@ -1030,7 +974,7 @@ private fun EpisodeNavBar(
         ) {
             Text("Siguiente")
             Icon(
-                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                painter = painterResource(R.drawable.ic_tabler_chevron_right),
                 contentDescription = null
             )
         }
