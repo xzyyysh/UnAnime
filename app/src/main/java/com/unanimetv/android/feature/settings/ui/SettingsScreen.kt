@@ -19,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenu
@@ -343,6 +344,7 @@ private fun ThemeDropdown(
 @Composable
 private fun UpdateCard() {
     val context = LocalContext.current
+    val checking by UpdateChecker.checking.collectAsState()
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -388,16 +390,28 @@ private fun UpdateCard() {
                         containerColor = MaterialTheme.colorScheme.primaryContainer
                     ),
                     shape = RoundedCornerShape(50),
-                    modifier = Modifier.clickable {
+                    modifier = Modifier.clickable(enabled = !checking) {
                         UpdateChecker.checkNow(context)
                     }
                 ) {
-                    Text(
-                        text = "Buscar",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm)
-                    )
+                    ) {
+                        if (checking) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        } else {
+                            Text(
+                                text = "Buscar",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
                 }
             }
         }

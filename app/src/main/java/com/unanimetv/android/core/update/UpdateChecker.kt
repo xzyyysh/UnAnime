@@ -49,6 +49,9 @@ object UpdateChecker {
     private val _download = MutableStateFlow<Download>(Download.Idle)
     val download: StateFlow<Download> = _download.asStateFlow()
 
+    private val _checking = MutableStateFlow(false)
+    val checking: StateFlow<Boolean> = _checking.asStateFlow()
+
     private var started = false
 
     fun start(context: Context) {
@@ -64,19 +67,24 @@ object UpdateChecker {
     }
 
     fun checkNow(context: Context) {
+        if (!_checking.compareAndSet(false, true)) return
         val appContext = context.applicationContext
         scope.launch {
-            val latest = runCatching { fetchLatest() }
-                .onFailure { UnAnimeLog.w("update", "manual check failed: ${it.message}") }
-                .getOrNull()
-            when {
-                latest == null -> toast(appContext, "No se pudo verificar actualizaciones")
-                !isNewer(latest.version, com.unanimetv.android.core.BuildInfo.version) ->
-                    toast(appContext, "Estás en la última versión (${com.unanimetv.android.core.BuildInfo.version})")
-                else -> {
-                    UnAnimeLog.i("update", "manual check: update available ${latest.version}")
-                    _update.value = latest
+            try {
+                val latest = runCatching { fetchLatest() }
+                    .onFailure { UnAnimeLog.w("update", "manual check failed: ${it.message}") }
+                    .getOrNull()
+                when {
+                    latest == null -> toast(appContext, "No se pudo verificar actualizaciones")
+                    !isNewer(latest.version, com.unanimetv.android.core.BuildInfo.version) ->
+                        toast(appContext, "Estás en la última versión (${com.unanimetv.android.core.BuildInfo.version})")
+                    else -> {
+                        UnAnimeLog.i("update", "manual check: update available ${latest.version}")
+                        _update.value = latest
+                    }
                 }
+            } finally {
+                _checking.value = false
             }
         }
     }
