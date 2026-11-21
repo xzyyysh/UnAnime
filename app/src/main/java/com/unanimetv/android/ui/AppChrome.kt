@@ -12,21 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.EmojiEvents
-import androidx.compose.material.icons.rounded.Language
-import androidx.compose.material.icons.rounded.LocalFireDepartment
-import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.rounded.Movie
-import androidx.compose.material.icons.rounded.PlayCircle
-import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.SmartDisplay
-import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,8 +31,10 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import com.unanimetv.android.R
 import com.unanimetv.android.core.designsystem.tokens.Spacing
 import com.unanimetv.android.feature.search.ui.SearchDialog
 import kotlinx.coroutines.launch
@@ -133,7 +120,7 @@ private fun ChromeTopBar(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Menu,
+                    painter = painterResource(R.drawable.ic_tabler_menu_2),
                     contentDescription = "Menú",
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.graphicsLayer {
@@ -172,7 +159,7 @@ private fun ChromeTopBar(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Search,
+                    painter = painterResource(R.drawable.ic_tabler_search),
                     contentDescription = "Buscar",
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.graphicsLayer {
@@ -211,75 +198,75 @@ private fun AppDrawer(
             HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.sm))
             DrawerSection("Catálogos")
             NavigationDrawerItem(
-                icon = { Icon(Icons.Rounded.PlayCircle, contentDescription = null) },
+                icon = { Icon(painterResource(R.drawable.ic_tabler_player_play), contentDescription = null) },
                 label = { Text("Últimos episodios") },
                 selected = false,
                 onClick = { onCatalogClick("episodio", "Últimos episodios") }
             )
             NavigationDrawerItem(
-                icon = { Icon(Icons.Rounded.SmartDisplay, contentDescription = null) },
+                icon = { Icon(painterResource(R.drawable.ic_tabler_device_tv), contentDescription = null) },
                 label = { Text("Animes") },
                 selected = false,
                 onClick = { onCatalogClick("online", "Animes") }
             )
             NavigationDrawerItem(
-                icon = { Icon(Icons.Rounded.Movie, contentDescription = null) },
+                icon = { Icon(painterResource(R.drawable.ic_tabler_movie), contentDescription = null) },
                 label = { Text("Películas") },
                 selected = false,
                 onClick = { onCatalogClick("pelicula", "Películas") }
             )
             NavigationDrawerItem(
-                icon = { Icon(Icons.Rounded.CalendarMonth, contentDescription = null) },
+                icon = { Icon(painterResource(R.drawable.ic_tabler_calendar), contentDescription = null) },
                 label = { Text("Temporadas") },
                 selected = false,
                 onClick = { onCatalogClick("temporada", "Temporadas") }
             )
             DrawerSection("Géneros")
             NavigationDrawerItem(
-                icon = { Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null) },
+                icon = { Icon(painterResource(R.drawable.ic_tabler_flame), contentDescription = null) },
                 label = { Text("En emisión") },
                 selected = false,
                 onClick = { onCatalogClick("genero/en-emision-1", "En emisión") }
             )
             NavigationDrawerItem(
-                icon = { Icon(Icons.Rounded.Block, contentDescription = null) },
+                icon = { Icon(painterResource(R.drawable.ic_tabler_ban), contentDescription = null) },
                 label = { Text("Sin censura") },
                 selected = false,
                 onClick = { onCatalogClick("genero/sin-censura", "Sin censura") }
             )
             NavigationDrawerItem(
-                icon = { Icon(Icons.Rounded.Language, contentDescription = null) },
+                icon = { Icon(painterResource(R.drawable.ic_tabler_world), contentDescription = null) },
                 label = { Text("Live Action") },
                 selected = false,
                 onClick = { onCatalogClick("genero/live-action", "Live Action") }
             )
             NavigationDrawerItem(
-                icon = { Icon(Icons.Rounded.Schedule, contentDescription = null) },
+                icon = { Icon(painterResource(R.drawable.ic_tabler_clock), contentDescription = null) },
                 label = { Text("Próximamente") },
                 selected = false,
                 onClick = { onCatalogClick("genero/proximamente", "Próximamente") }
             )
             NavigationDrawerItem(
-                icon = { Icon(Icons.Rounded.Album, contentDescription = null) },
+                icon = { Icon(painterResource(R.drawable.ic_tabler_disc), contentDescription = null) },
                 label = { Text("Blu-Ray / DVD") },
                 selected = false,
                 onClick = { onCatalogClick("genero/blu-ray-dvd-2", "Blu-Ray / DVD") }
             )
             NavigationDrawerItem(
-                icon = { Icon(Icons.Rounded.EmojiEvents, contentDescription = null) },
+                icon = { Icon(painterResource(R.drawable.ic_tabler_trophy), contentDescription = null) },
                 label = { Text("Ganadores de premios") },
                 selected = false,
                 onClick = { onCatalogClick("genero/award-winning-anime", "Ganadores de premios") }
             )
             DrawerSection("Destacados")
             NavigationDrawerItem(
-                icon = { Icon(Icons.Rounded.TrendingUp, contentDescription = null) },
+                icon = { Icon(painterResource(R.drawable.ic_tabler_trending_up), contentDescription = null) },
                 label = { Text("Popular en la web") },
                 selected = false,
                 onClick = { onCatalogClick("tendencias", "Popular en la web") }
             )
             NavigationDrawerItem(
-                icon = { Icon(Icons.Rounded.Star, contentDescription = null) },
+                icon = { Icon(painterResource(R.drawable.ic_tabler_star), contentDescription = null) },
                 label = { Text("Mejores valorados") },
                 selected = false,
                 onClick = { onCatalogClick("ratings", "Mejores valorados") }

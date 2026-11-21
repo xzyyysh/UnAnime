@@ -32,11 +32,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.unanimetv.android.core.designsystem.tokens.Spacing
 import com.unanimetv.android.core.network.CloudflareGate
+import com.unanimetv.android.R
 import com.unanimetv.android.core.navigation.TopLevelDestination
 import com.unanimetv.android.core.navigation.UnAnimeNavHost
 import com.unanimetv.android.ui.CloudflareChallengeDialog
@@ -205,7 +207,7 @@ private fun ShellItem(
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
     ) {
         Icon(
-            imageVector = destination.icon,
+            painter = painterResource(destination.iconRes),
             contentDescription = destination.label,
             tint = contentColor
         )
@@ -252,7 +254,7 @@ private fun ShellItemVertical(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = destination.icon,
+            painter = painterResource(destination.iconRes),
             contentDescription = destination.label,
             tint = contentColor
         )

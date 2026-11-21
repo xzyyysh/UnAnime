@@ -24,12 +24,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Fullscreen
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Replay
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.Player
 import androidx.media3.ui.PlayerView
+import androidx.compose.ui.res.painterResource
 import com.unanimetv.android.R
 import com.notanime.es.util.UnAnimeLog
 import com.unanimetv.android.core.designsystem.tokens.Spacing
@@ -191,10 +186,10 @@ fun PlayerVideo(
                         .background(Color.Black.copy(alpha = 0.45f), CircleShape)
                 ) {
                     Icon(
-                        imageVector = when {
-                            ended -> Icons.Rounded.Replay
-                            playing -> Icons.Rounded.Pause
-                            else -> Icons.Rounded.PlayArrow
+                        painter = when {
+                            ended -> painterResource(R.drawable.ic_tabler_refresh)
+                            playing -> painterResource(R.drawable.ic_tabler_player_pause)
+                            else -> painterResource(R.drawable.ic_tabler_player_play)
                         },
                         contentDescription = when {
                             ended -> "Reiniciar"
@@ -259,7 +254,7 @@ fun PlayerVideo(
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Settings,
+                            painter = painterResource(R.drawable.ic_tabler_settings),
                             contentDescription = "Configuración",
                             tint = if (settingsOpen) MaterialTheme.colorScheme.primary else Color.White,
                             modifier = Modifier.size(20.dp)
@@ -270,7 +265,7 @@ fun PlayerVideo(
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Fullscreen,
+                            painter = painterResource(R.drawable.ic_tabler_maximize),
                             contentDescription = "Pantalla completa",
                             tint = Color.White,
                             modifier = Modifier.size(20.dp)

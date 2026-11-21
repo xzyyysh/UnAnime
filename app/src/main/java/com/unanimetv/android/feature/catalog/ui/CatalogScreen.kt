@@ -11,8 +11,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,8 +21,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.unanimetv.android.R
 import com.unanimetv.android.core.designsystem.component.EmptyState
 import com.unanimetv.android.core.designsystem.component.LoadingState
 import com.unanimetv.android.core.designsystem.component.PosterCard
@@ -71,7 +71,7 @@ fun CatalogScreen(
         when {
             uiState.isLoading -> LoadingState(modifier = Modifier.fillMaxSize())
             uiState.error != null -> EmptyState(
-                icon = Icons.Rounded.ErrorOutline,
+                icon = painterResource(R.drawable.ic_tabler_alert_circle),
                 message = uiState.error.orEmpty(),
                 modifier = Modifier.fillMaxSize()
             )

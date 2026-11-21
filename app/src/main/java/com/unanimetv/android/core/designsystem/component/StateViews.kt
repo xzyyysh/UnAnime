@@ -10,7 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.style.TextAlign
 import com.unanimetv.android.core.designsystem.tokens.Spacing
 
@@ -21,7 +21,7 @@ fun LoadingState(modifier: Modifier = Modifier) {
 
 @Composable
 fun EmptyState(
-    icon: ImageVector,
+    icon: Painter,
     message: String,
     modifier: Modifier = Modifier
 ) {
@@ -31,7 +31,7 @@ fun EmptyState(
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = icon,
+            painter = icon,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
