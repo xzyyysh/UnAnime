@@ -308,7 +308,7 @@ private fun EpisodesSection(
                     Tab(
                         selected = season.season == selectedSeason,
                         onClick = { onSeasonSelect(season.season) },
-                        text = { Text("Temporada ${season.season}") }
+                        text = { Text("Temporada ${season.season} (${season.episodes.size})") }
                     )
                 }
             }
