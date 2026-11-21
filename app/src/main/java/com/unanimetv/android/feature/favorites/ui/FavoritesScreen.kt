@@ -99,7 +99,7 @@ fun FavoritesScreen(
                 }) {
                     Text(text = "Cancelar")
                 }
-            } else {
+            } else if (favorites.isNotEmpty()) {
                 TextButton(onClick = { selecting = true }) {
                     Text(text = "Seleccionar")
                 }
@@ -107,7 +107,6 @@ fun FavoritesScreen(
         }
         if (favorites.isEmpty()) {
             EmptyState(
-                icon = painterResource(R.drawable.ic_tabler_star),
                 message = "Sin favoritos aún. Agrega animes desde su página con el menú ⋮"
             )
         } else {

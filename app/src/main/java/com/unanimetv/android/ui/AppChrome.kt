@@ -204,7 +204,7 @@ private fun AppDrawer(
             HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.sm))
             NavigationDrawerItem(
                 icon = { Icon(painterResource(R.drawable.ic_tabler_star), contentDescription = null) },
-                label = { Text("Favorites") },
+                label = { Text("Favoritos") },
                 selected = false,
                 onClick = onFavoritesClick
             )

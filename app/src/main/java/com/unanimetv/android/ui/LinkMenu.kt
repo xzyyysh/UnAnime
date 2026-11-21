@@ -64,16 +64,6 @@ fun LinkMenu(
             if (isFavorite != null && onToggleFavorite != null) {
                 DropdownMenuItem(
                     text = { Text(if (isFavorite) "Quitar de favoritos" else "Agregar a favoritos") },
-                    leadingIcon = {
-                        Icon(
-                            painter = painterResource(
-                                if (isFavorite) R.drawable.ic_tabler_star
-                                else R.drawable.ic_tabler_star_off
-                            ),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
                     onClick = {
                         expanded = false
                         onToggleFavorite()

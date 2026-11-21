@@ -21,20 +21,22 @@ fun LoadingState(modifier: Modifier = Modifier) {
 
 @Composable
 fun EmptyState(
-    icon: Painter,
     message: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    icon: Painter? = null
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(Spacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            painter = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        if (icon != null) {
+            Icon(
+                painter = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
