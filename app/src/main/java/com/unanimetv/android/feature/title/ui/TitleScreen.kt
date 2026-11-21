@@ -32,6 +32,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,9 +42,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import java.util.Locale
 import coil3.compose.AsyncImage
 import com.notanime.es.scraper.TitleData
 import com.unanimetv.android.R
+import com.unanimetv.android.core.favorites.FavoriteAnime
+import com.unanimetv.android.core.favorites.FavoritesStore
 import com.unanimetv.android.core.designsystem.component.EmptyState
 import com.unanimetv.android.core.designsystem.component.LoadingState
 import com.unanimetv.android.core.designsystem.component.StatusBadge
@@ -58,6 +63,8 @@ fun TitleScreen(
 ) {
     val viewModel: TitleViewModel = viewModel(key = url) { TitleViewModel(url) }
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    LaunchedEffect(Unit) { FavoritesStore.init(context) }
 
     when {
         uiState.isLoading -> LoadingState(modifier = modifier)
@@ -83,6 +90,8 @@ private fun TitleContent(
     modifier: Modifier = Modifier
 ) {
     if (data == null) return
+    val favorites by FavoritesStore.favorites.collectAsState()
+    val isFavorite = favorites.any { it.url == data.url }
     var selectedSeason by remember(data.url) {
         mutableIntStateOf(data.seasons.firstOrNull()?.season ?: 0)
     }
@@ -108,7 +117,24 @@ private fun TitleContent(
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
-            LinkMenu(url = data.url)
+            LinkMenu(
+                url = data.url,
+                isFavorite = isFavorite,
+                onToggleFavorite = {
+                    if (isFavorite) {
+                        FavoritesStore.remove(data.url)
+                    } else {
+                        FavoritesStore.add(
+                            FavoriteAnime(
+                                url = data.url,
+                                title = data.title,
+                                image = data.poster,
+                                rating = data.rating.value?.let { String.format(Locale.US, "%.1f", it) }
+                            )
+                        )
+                    }
+                }
+            )
         }
         Header(data = data)
         if (data.genres.isNotEmpty()) {

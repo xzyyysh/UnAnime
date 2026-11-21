@@ -22,7 +22,12 @@ import androidx.compose.ui.text.AnnotatedString
 import com.unanimetv.android.R
 
 @Composable
-fun LinkMenu(url: String, modifier: Modifier = Modifier) {
+fun LinkMenu(
+    url: String,
+    modifier: Modifier = Modifier,
+    isFavorite: Boolean? = null,
+    onToggleFavorite: (() -> Unit)? = null
+) {
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
@@ -39,6 +44,25 @@ fun LinkMenu(url: String, modifier: Modifier = Modifier) {
             onDismissRequest = { expanded = false },
             shape = MaterialTheme.shapes.medium
         ) {
+            if (isFavorite != null && onToggleFavorite != null) {
+                DropdownMenuItem(
+                    text = { Text(if (isFavorite) "Quitar de favoritos" else "Agregar a favoritos") },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(
+                                if (isFavorite) R.drawable.ic_tabler_star
+                                else R.drawable.ic_tabler_star_off
+                            ),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onToggleFavorite()
+                    }
+                )
+            }
             DropdownMenuItem(
                 text = { Text("Abrir en el navegador") },
                 onClick = {

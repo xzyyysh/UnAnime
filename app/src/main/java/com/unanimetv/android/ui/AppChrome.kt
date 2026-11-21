@@ -45,6 +45,7 @@ fun AppChrome(
     collapseProgress: () -> Float,
     onTitleClick: (String) -> Unit,
     onCatalogClick: (String, String) -> Unit,
+    onFavoritesClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     alwaysSolid: Boolean = false,
     content: @Composable BoxScope.() -> Unit
@@ -61,6 +62,10 @@ fun AppChrome(
                 onCatalogClick = { path, title ->
                     scope.launch { drawerState.close() }
                     onCatalogClick(path, title)
+                },
+                onFavoritesClick = {
+                    scope.launch { drawerState.close() }
+                    onFavoritesClick()
                 }
             )
         }
@@ -175,7 +180,8 @@ private fun ChromeTopBar(
 @Composable
 private fun AppDrawer(
     logoVariant: MutableIntState,
-    onCatalogClick: (String, String) -> Unit
+    onCatalogClick: (String, String) -> Unit,
+    onFavoritesClick: () -> Unit
 ) {
     ModalDrawerSheet(
         drawerContainerColor = MaterialTheme.colorScheme.background
@@ -195,6 +201,13 @@ private fun AppDrawer(
                     NotAnimeLogo(variantState = logoVariant)
                 }
             }
+            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.sm))
+            NavigationDrawerItem(
+                icon = { Icon(painterResource(R.drawable.ic_tabler_star), contentDescription = null) },
+                label = { Text("Favorites") },
+                selected = false,
+                onClick = onFavoritesClick
+            )
             HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.sm))
             DrawerSection("Catálogos")
             NavigationDrawerItem(

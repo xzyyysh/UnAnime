@@ -38,6 +38,7 @@ fun CatalogScreen(
     title: String,
     onTitleClick: (String) -> Unit,
     onCatalogClick: (String, String) -> Unit,
+    onFavoritesClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val viewModel: CatalogViewModel = viewModel()
@@ -66,6 +67,7 @@ fun CatalogScreen(
         alwaysSolid = true,
         onTitleClick = onTitleClick,
         onCatalogClick = onCatalogClick,
+        onFavoritesClick = onFavoritesClick,
         modifier = modifier
     ) {
         when {
