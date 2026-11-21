@@ -3,6 +3,7 @@ package com.unanimetv.android.core.network
 import android.annotation.SuppressLint
 import android.content.Context
 import android.webkit.JavascriptInterface
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.notanime.es.net.Fetcher
@@ -41,6 +42,14 @@ class WebViewFetcher(private val context: Context) : Fetcher {
                 webView.settings.javaScriptEnabled = true
                 webView.addJavascriptInterface(HtmlBridge(deferred), "UnAnimeBridge")
                 webView.webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(
+                        view: WebView,
+                        request: WebResourceRequest
+                    ): Boolean {
+                        val scheme = request.url.scheme?.lowercase()
+                        return scheme != "http" && scheme != "https"
+                    }
+
                     override fun onPageFinished(view: WebView, viewUrl: String) {
                         val title = view.title ?: ""
                         if (title.contains("just a moment", ignoreCase = true)) return

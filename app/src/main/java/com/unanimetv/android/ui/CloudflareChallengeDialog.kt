@@ -1,7 +1,9 @@
 package com.unanimetv.android.ui
 
 import android.view.ViewGroup
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -51,6 +53,15 @@ fun CloudflareChallengeDialog(
                             )
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
+                            webViewClient = object : WebViewClient() {
+                                override fun shouldOverrideUrlLoading(
+                                    view: WebView,
+                                    request: WebResourceRequest
+                                ): Boolean {
+                                    val scheme = request.url.scheme?.lowercase()
+                                    return scheme != "http" && scheme != "https"
+                                }
+                            }
                             loadUrl(url)
                         }
                     },
