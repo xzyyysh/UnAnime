@@ -8,6 +8,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.SnapPosition
@@ -443,17 +446,35 @@ private fun ScreenshotPreview(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var downloading by remember { mutableStateOf(false) }
+    val rotation = remember { Animatable(0f) }
+    LaunchedEffect(downloading) {
+        if (downloading) {
+            while (downloading) {
+                rotation.animateTo(
+                    rotation.value + 360f,
+                    animationSpec = tween(900, easing = LinearEasing)
+                )
+            }
+        } else {
+            rotation.snapTo(0f)
+        }
+    }
     val download: () -> Unit = {
-        scope.launch {
-            runCatching { ImageDownloader.download(context, screenshot.full, fileName) }
-                .onSuccess {
-                    UnAnimeLog.d("download", "ok: $it")
-                    Toast.makeText(context, "Imagen descargada en Descargas", Toast.LENGTH_SHORT).show()
-                }
-                .onFailure {
-                    UnAnimeLog.e("download", "failed", it)
-                    Toast.makeText(context, "No se pudo descargar", Toast.LENGTH_SHORT).show()
-                }
+        if (!downloading) {
+            downloading = true
+            scope.launch {
+                runCatching { ImageDownloader.download(context, screenshot.full, fileName) }
+                    .onSuccess {
+                        UnAnimeLog.d("download", "ok: $it")
+                        Toast.makeText(context, "Imagen descargada en Descargas", Toast.LENGTH_SHORT).show()
+                    }
+                    .onFailure {
+                        UnAnimeLog.e("download", "failed", it)
+                        Toast.makeText(context, "No se pudo descargar", Toast.LENGTH_SHORT).show()
+                    }
+                downloading = false
+            }
         }
     }
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -499,7 +520,8 @@ private fun ScreenshotPreview(
                     Icon(
                         painter = painterResource(R.drawable.ic_tabler_download),
                         contentDescription = "Descargar",
-                        tint = Color.White
+                        tint = Color.White,
+                        modifier = Modifier.graphicsLayer { rotationZ = rotation.value }
                     )
                 }
                 IconButton(
