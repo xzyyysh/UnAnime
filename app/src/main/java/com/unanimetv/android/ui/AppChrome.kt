@@ -1,8 +1,6 @@
 package com.unanimetv.android.ui
 
 import android.content.res.Configuration
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -36,6 +34,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.graphicsLayer
@@ -153,20 +152,22 @@ private fun ChromeTopBar(
     onSearchClick: () -> Unit
 ) {
     val progress = collapseProgress()
-    val barColor by animateColorAsState(
-        targetValue = when {
-            alwaysSolid -> MaterialTheme.colorScheme.surface
-            else -> MaterialTheme.colorScheme.surface.copy(alpha = progress)
-        },
-        animationSpec = tween(durationMillis = 300),
-        label = "chrome-topbar"
-    )
+    val visibility = if (alwaysSolid) 1f else progress
+    val barColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f * visibility)
     val chipAlpha = if (alwaysSolid) 0f else 1f - progress
     val logoAlpha = if (alwaysSolid) 1f else progress
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(barColor)
+            .background(
+                Brush.verticalGradient(
+                    colorStops = arrayOf(
+                        0f to barColor,
+                        0.6f to barColor,
+                        1f to barColor.copy(alpha = 0f)
+                    )
+                )
+            )
             .statusBarsPadding()
             .padding(horizontal = Spacing.xs, vertical = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically
