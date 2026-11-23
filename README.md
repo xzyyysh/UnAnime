@@ -1,12 +1,16 @@
+<h1 align="center">UnAnime</h1>
+
 <p align="center">
   <img src="art/UnAnime.jpg" alt="UnAnime" width="160"/>
 </p>
 
-# UnAnime
+<p align="center">
+  UnAnime es una app de Android para ver anime online. Obtiene catalogos, titulos, episodios y streams del sitio fuente y los reproduce en un player integrado con seleccion de idioma y servidor, pantalla completa, favoritos, galeria de capturas del episodio con descarga de imagenes y reproduccion en segundo plano.
+</p>
 
-UnAnime es una app de Android para ver anime online. Obtiene catalogos, titulos, episodios y streams del sitio fuente y los reproduce en un player integrado con seleccion de idioma y servidor, pantalla completa, favoritos, galeria de capturas del episodio con descarga de imagenes y reproduccion en segundo plano.
-
-Reversed from: https://ww4.animeonline.ninja
+<p align="center">
+  Reversed from: <a href="https://ww4.animeonline.ninja">https://ww4.animeonline.ninja</a>
+</p>
 
 ## Como usarlo en Android Studio
 
