@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="art/UnAnime.jpg" alt="UnAnime" width="160"/>
+</p>
+
 # UnAnime
 
 UnAnime es una app de Android para ver anime online. Obtiene catalogos, titulos, episodios y streams del sitio fuente y los reproduce en un player integrado con seleccion de idioma y servidor, pantalla completa, favoritos, galeria de capturas del episodio con descarga de imagenes y reproduccion en segundo plano.
