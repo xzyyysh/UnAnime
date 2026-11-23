@@ -82,15 +82,27 @@ fun AppChrome(
             VerticalDivider()
             Box(modifier = Modifier.weight(1f)) {
                 content()
-                ChromeTopBar(
-                    collapseProgress = collapseProgress,
-                    alwaysSolid = alwaysSolid,
-                    logoVariant = logoVariant,
-                    showMenu = false,
-                    showTitle = false,
-                    onMenuClick = { scope.launch { drawerState.open() } },
-                    onSearchClick = { searchOpen = true }
-                )
+                IconButton(
+                    onClick = { searchOpen = true },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .statusBarsPadding()
+                        .padding(horizontal = Spacing.xs, vertical = Spacing.xs)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_tabler_search),
+                            contentDescription = "Buscar",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             }
         }
     } else {

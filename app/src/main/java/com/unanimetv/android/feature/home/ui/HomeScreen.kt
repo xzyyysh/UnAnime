@@ -3,6 +3,7 @@ package com.unanimetv.android.feature.home.ui
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -178,6 +179,7 @@ private fun HomeGrid(
     onSeeAll: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         state = gridState,
@@ -190,23 +192,25 @@ private fun HomeGrid(
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         horizontalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(top = Spacing.lg),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                BrandMark(
-                    size = 30.dp,
-                    modifier = Modifier.graphicsLayer { alpha = 1f - collapseProgress }
-                )
-                NotAnimeLogo(
-                    variantState = logoVariant,
-                    modifier = Modifier.graphicsLayer { alpha = 1f - collapseProgress }
-                )
+        if (!isLandscape) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(top = Spacing.lg),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    BrandMark(
+                        size = 30.dp,
+                        modifier = Modifier.graphicsLayer { alpha = 1f - collapseProgress }
+                    )
+                    NotAnimeLogo(
+                        variantState = logoVariant,
+                        modifier = Modifier.graphicsLayer { alpha = 1f - collapseProgress }
+                    )
+                }
             }
         }
         if (uiState.banner.isNotEmpty()) {
