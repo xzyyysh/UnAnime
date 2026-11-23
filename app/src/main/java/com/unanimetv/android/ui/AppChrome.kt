@@ -71,7 +71,7 @@ fun AppChrome(
                     .fillMaxHeight()
                     .fillMaxWidth(0.4f)
                     .background(MaterialTheme.colorScheme.background)
-                    .verticalScroll(rememberScrollState())
+                    .statusBarsPadding()
             ) {
                 DrawerContent(
                     logoVariant = logoVariant,
@@ -259,7 +259,12 @@ private fun DrawerContent(
     onCatalogClick: (String, String) -> Unit,
     onFavoritesClick: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(vertical = Spacing.lg)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = Spacing.lg)
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
