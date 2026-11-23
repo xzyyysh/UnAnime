@@ -56,6 +56,18 @@ object CurrentStream {
         dataSpec.uri.buildUpon().clearQuery().build().toString()
     }
 
+    fun clearCache(context: Context) {
+        synchronized(cacheLock) {
+            val instance = cache
+            if (instance != null) {
+                instance.keys.forEach { instance.removeResource(it) }
+            } else {
+                SimpleCache.delete(File(context.cacheDir, "stream_cache"), StandaloneDatabaseProvider(context))
+            }
+        }
+        UnAnimeLog.d("player", "stream cache cleared")
+    }
+
     fun dataSourceFactory(context: Context): DataSource.Factory = DataSource.Factory {
         val headers = buildMap {
             referer?.let { put("Referer", it) }

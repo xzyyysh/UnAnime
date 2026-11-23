@@ -47,6 +47,7 @@ import coil3.imageLoader
 import com.unanimetv.android.R
 import com.unanimetv.android.core.BuildInfo
 import com.unanimetv.android.core.designsystem.theme.ThemeController
+import com.unanimetv.android.core.playback.CurrentStream
 import com.unanimetv.android.core.update.UpdateChecker
 import com.unanimetv.android.core.designsystem.theme.ThemeMode
 import com.unanimetv.android.core.designsystem.theme.ThemeStyle
@@ -89,6 +90,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 context.imageLoader.diskCache?.clear()
                 File(context.cacheDir, "downloads").deleteRecursively()
                 File(context.cacheDir, "update").deleteRecursively()
+                CurrentStream.clearCache(context)
                 cacheCleared = true
             }
         )
@@ -429,7 +431,9 @@ private fun CacheCard(
         val downloadsSize = downloads.walkTopDown().filter { it.isFile }.sumOf { it.length() }
         val update = File(context.cacheDir, "update")
         val updateSize = update.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-        (context.imageLoader.diskCache?.size ?: 0L) + downloadsSize + updateSize
+        val stream = File(context.cacheDir, "stream_cache")
+        val streamSize = stream.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+        (context.imageLoader.diskCache?.size ?: 0L) + downloadsSize + updateSize + streamSize
     }
     val sizeText = remember(sizeBytes) {
         val mb = sizeBytes / (1024.0 * 1024.0)
