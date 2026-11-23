@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -82,15 +83,17 @@ fun AppChrome(
             VerticalDivider()
             Box(modifier = Modifier.weight(1f)) {
                 content()
-                ChromeTopBar(
-                    collapseProgress = collapseProgress,
-                    alwaysSolid = alwaysSolid,
-                    logoVariant = logoVariant,
-                    showMenu = false,
-                    showTitle = false,
-                    onMenuClick = { scope.launch { drawerState.open() } },
-                    onSearchClick = { searchOpen = true }
-                )
+                FloatingActionButton(
+                    onClick = { searchOpen = true },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(Spacing.lg)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_tabler_search),
+                        contentDescription = "Buscar"
+                    )
+                }
             }
         }
     } else {
@@ -135,8 +138,6 @@ private fun ChromeTopBar(
     collapseProgress: () -> Float,
     alwaysSolid: Boolean,
     logoVariant: MutableIntState,
-    showMenu: Boolean = true,
-    showTitle: Boolean = true,
     onMenuClick: () -> Unit,
     onSearchClick: () -> Unit
 ) {
@@ -159,47 +160,43 @@ private fun ChromeTopBar(
             .padding(horizontal = Spacing.xs, vertical = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (showMenu) {
-            IconButton(onClick = onMenuClick) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = chipAlpha)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_tabler_menu_2),
-                        contentDescription = "Menú",
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.graphicsLayer {
-                            scaleX = 1f - 0.1f * progress
-                            scaleY = 1f - 0.1f * progress
-                        }
-                    )
-                }
+        IconButton(onClick = onMenuClick) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = chipAlpha)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_tabler_menu_2),
+                    contentDescription = "Menú",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = 1f - 0.1f * progress
+                        scaleY = 1f - 0.1f * progress
+                    }
+                )
             }
         }
         Box(
             modifier = Modifier.weight(1f),
             contentAlignment = Alignment.Center
         ) {
-            if (showTitle) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Spacing.sm),
-                    modifier = Modifier.graphicsLayer {
-                        alpha = logoAlpha
-                        scaleX = 0.8f + 0.2f * logoAlpha
-                        scaleY = 0.8f + 0.2f * logoAlpha
-                    }
-                ) {
-                    BrandMark(size = 26.dp)
-                    NotAnimeLogo(
-                        variantState = logoVariant,
-                        style = MaterialTheme.typography.titleLarge
-                    )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Spacing.sm),
+                modifier = Modifier.graphicsLayer {
+                    alpha = logoAlpha
+                    scaleX = 0.8f + 0.2f * logoAlpha
+                    scaleY = 0.8f + 0.2f * logoAlpha
                 }
+            ) {
+                BrandMark(size = 26.dp)
+                NotAnimeLogo(
+                    variantState = logoVariant,
+                    style = MaterialTheme.typography.titleLarge
+                )
             }
         }
         IconButton(onClick = onSearchClick) {
