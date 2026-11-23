@@ -259,7 +259,7 @@ private fun EpisodeContent(
         }
         onDispose {
             PlayerFullscreen.set(false)
-            if (fullscreen && activity != null) {
+            if (activity != null) {
                 activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                 androidx.core.view.WindowCompat.getInsetsController(activity.window, activity.window.decorView)
                     .show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
