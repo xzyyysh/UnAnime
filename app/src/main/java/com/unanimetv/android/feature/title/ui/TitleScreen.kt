@@ -1,5 +1,6 @@
 package com.unanimetv.android.feature.title.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -101,6 +102,7 @@ private fun TitleContent(
     modifier: Modifier = Modifier
 ) {
     if (data == null) return
+    val context = LocalContext.current
     val favorites by FavoritesStore.favorites.collectAsState()
     val isFavorite = favorites.any { it.url == data.url }
     var selectedSeason by remember(data.url) {
@@ -145,6 +147,11 @@ private fun TitleContent(
                             )
                         )
                     }
+                    Toast.makeText(
+                        context,
+                        if (isFavorite) "Quitado de favoritos" else "Agregado a favoritos",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             )
         }
