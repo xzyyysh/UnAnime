@@ -1,6 +1,6 @@
 package com.notanime.es.extractor
 
-import com.notanime.es.net.WebViewHttp
+import com.notanime.es.net.CronetHttp
 import kotlinx.coroutines.delay
 import java.io.IOException
 import java.net.URLEncoder
@@ -44,10 +44,10 @@ object Uqload {
 
     private suspend fun resolveOnce(embedUrl: String, code: String): StreamInfo {
         UnAnimeLog.d("uqload", "resolving $code")
-        val page = WebViewHttp.get(embedUrl, mapOf("referer" to REFERER))
+        val page = CronetHttp.get(embedUrl, mapOf("referer" to REFERER))
         if (!page.isSuccessful) throw IOException("uqload ${page.code}")
         val cookies = page.setCookies.joinToString("; ") { it.substringBefore(';') }
-        val post = WebViewHttp.post(
+        val post = CronetHttp.post(
             url = DL_URL,
             body = formBody(code),
             contentType = "application/x-www-form-urlencoded",

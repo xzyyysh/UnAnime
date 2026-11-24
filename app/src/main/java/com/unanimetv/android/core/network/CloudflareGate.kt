@@ -43,9 +43,15 @@ object CloudflareGate {
 
     fun clear() {
         val manager = CookieManager.getInstance()
-        val expired = "cf_clearance=; Domain=$CLEARANCE_DOMAIN; Path=/; Max-Age=0"
-        manager.setCookie(NotAnimeConfig.ORIGIN, expired)
-        manager.setCookie("https://animeonline.ninja", expired)
+        val expired = "Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/"
+        manager.setCookie(NotAnimeConfig.ORIGIN, "cf_clearance=; $expired")
+        manager.setCookie(NotAnimeConfig.ORIGIN, "cf_clearance=; Domain=$CLEARANCE_DOMAIN; $expired")
+        val stillThere = manager.getCookie(NotAnimeConfig.ORIGIN)?.contains("cf_clearance") == true
+        UnAnimeLog.d("cloudflare", "clearance cleared (still present: $stillThere)")
+        if (stillThere) {
+            manager.removeAllCookies(null)
+            UnAnimeLog.w("cloudflare", "targeted clear failed, removed all cookies")
+        }
     }
 
     fun dismiss() {

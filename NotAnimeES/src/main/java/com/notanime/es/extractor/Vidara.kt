@@ -1,7 +1,7 @@
 package com.notanime.es.extractor
 
 import com.notanime.es.extractor.FormDl.retry3
-import com.notanime.es.net.WebViewHttp
+import com.notanime.es.net.CronetHttp
 import com.notanime.es.util.UnAnimeLog
 import org.json.JSONArray
 import org.json.JSONObject
@@ -15,7 +15,7 @@ object Vidara {
 
     private suspend fun resolveOnce(embedUrl: String, code: String): StreamInfo {
         UnAnimeLog.d("vidara", "resolving $code")
-        val response = WebViewHttp.post(
+        val response = CronetHttp.post(
             url = STREAM_URL,
             body = JSONObject().put("filecode", code).put("device", "web").put("codecs", JSONArray()).toString(),
             contentType = "application/json",

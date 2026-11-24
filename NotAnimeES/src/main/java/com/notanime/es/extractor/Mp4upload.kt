@@ -1,6 +1,6 @@
 package com.notanime.es.extractor
 
-import com.notanime.es.net.WebViewHttp
+import com.notanime.es.net.CronetHttp
 import com.notanime.es.util.UnAnimeLog
 import java.io.IOException
 
@@ -14,7 +14,7 @@ object Mp4upload {
 
     suspend fun resolve(url: String): StreamInfo {
         UnAnimeLog.d("mp4upload", "resolving $url")
-        val response = WebViewHttp.get(url, mapOf("referer" to REFERER))
+        val response = CronetHttp.get(url, mapOf("referer" to REFERER))
         if (!response.isSuccessful) throw IOException("mp4upload ${response.code}")
         val html = response.body
         val src = srcRegex.find(html)?.groupValues?.get(1)

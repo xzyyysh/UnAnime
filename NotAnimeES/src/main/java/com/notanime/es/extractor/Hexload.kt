@@ -1,7 +1,7 @@
 package com.notanime.es.extractor
 
 import com.notanime.es.extractor.FormDl.retry3
-import com.notanime.es.net.WebViewHttp
+import com.notanime.es.net.CronetHttp
 import com.notanime.es.util.UnAnimeLog
 import org.json.JSONObject
 import java.io.IOException
@@ -24,7 +24,7 @@ object Hexload {
         ).entries.joinToString("&") { (key, value) ->
             "${URLEncoder.encode(key, "UTF-8")}=${URLEncoder.encode(value, "UTF-8")}"
         }
-        val response = WebViewHttp.post(
+        val response = CronetHttp.post(
             url = DOWNLOAD_URL,
             body = body,
             contentType = "application/x-www-form-urlencoded",
