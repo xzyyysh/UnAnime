@@ -1,6 +1,6 @@
 package com.notanime.es.extractor
 
-import com.notanime.es.net.CronetHttp
+import com.notanime.es.net.WebViewHttp
 import kotlinx.coroutines.delay
 import java.io.IOException
 import java.net.URLEncoder
@@ -15,7 +15,7 @@ object FormDl {
     )
 
     suspend fun fetchEmbedAndPostDl(embedUrl: String, dlUrl: String, fileCode: String): DlFlowResult {
-        val page = CronetHttp.get(embedUrl, mapOf("referer" to REFERER))
+        val page = WebViewHttp.get(embedUrl, mapOf("referer" to REFERER))
         if (!page.isSuccessful) throw IOException("embed ${page.code}")
         val cookies = page.setCookies.joinToString("; ") { it.substringBefore(';') }
         val body = mapOf(
@@ -26,7 +26,7 @@ object FormDl {
         ).entries.joinToString("&") { (key, value) ->
             "${URLEncoder.encode(key, "UTF-8")}=${URLEncoder.encode(value, "UTF-8")}"
         }
-        val post = CronetHttp.post(
+        val post = WebViewHttp.post(
             url = dlUrl,
             body = body,
             contentType = "application/x-www-form-urlencoded",

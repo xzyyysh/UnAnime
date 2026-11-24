@@ -1,6 +1,6 @@
 package com.notanime.es.extractor
 
-import com.notanime.es.net.CronetHttp
+import com.notanime.es.net.WebViewHttp
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -41,7 +41,7 @@ object Gupload {
 
     private suspend fun checkQuality(base: String, quality: String): StreamQuality? {
         return try {
-            val response = CronetHttp.get("$base$quality.m3u8")
+            val response = WebViewHttp.get("$base$quality.m3u8")
             if (response.isSuccessful && response.body.trimStart().startsWith("#EXTM3U")) {
                 StreamQuality(quality, "$base$quality.m3u8")
             } else {
@@ -54,7 +54,7 @@ object Gupload {
 
     suspend fun resolve(url: String): StreamInfo {
         UnAnimeLog.d("gupload", "resolving $url")
-        val response = CronetHttp.get(url)
+        val response = WebViewHttp.get(url)
         if (!response.isSuccessful) throw IOException("gupload ${response.code} $url")
         val html = response.body
         val key = extractKey(html) ?: throw IOException("gupload: key not found")

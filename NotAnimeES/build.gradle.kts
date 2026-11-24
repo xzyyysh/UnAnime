@@ -22,6 +22,5 @@ android {
 
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.cronet)
     implementation(libs.jsoup)
 }

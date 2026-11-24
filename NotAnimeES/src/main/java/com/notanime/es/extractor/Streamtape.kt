@@ -1,6 +1,6 @@
 package com.notanime.es.extractor
 
-import com.notanime.es.net.CronetHttp
+import com.notanime.es.net.WebViewHttp
 import kotlinx.coroutines.delay
 import java.io.IOException
 import com.notanime.es.util.UnAnimeLog
@@ -45,7 +45,7 @@ object Streamtape {
     }
 
     private suspend fun resolveOnce(url: String): StreamInfo {
-        val response = CronetHttp.get(url)
+        val response = WebViewHttp.get(url)
         if (!response.isSuccessful) throw IOException("streamtape ${response.code}")
         val html = response.body
         val videoId = videoIdRegex.find(url)?.groupValues?.get(1)

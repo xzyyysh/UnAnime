@@ -1,6 +1,6 @@
 package com.notanime.es.extractor
 
-import com.notanime.es.net.CronetHttp
+import com.notanime.es.net.WebViewHttp
 import java.net.URI
 
 data class HlsVariant(
@@ -44,7 +44,7 @@ object Hls {
     suspend fun masterWithVariants(master: String, referer: String): List<StreamQuality> {
         val qualities = mutableListOf(StreamQuality("master", master))
         try {
-            val response = CronetHttp.get(master, mapOf("referer" to referer))
+            val response = WebViewHttp.get(master, mapOf("referer" to referer))
             if (response.isSuccessful) {
                 parseMasterPlaylist(response.body, master).forEach {
                     qualities.add(StreamQuality(it.label, it.url))
