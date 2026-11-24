@@ -39,7 +39,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -321,12 +320,6 @@ fun PlayerVideo(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(start = edgePadding, top = edgePadding)
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)
-                        ),
-                        RoundedCornerShape(50)
-                    )
                     .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
             )
         }

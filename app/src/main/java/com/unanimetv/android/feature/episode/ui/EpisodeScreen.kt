@@ -18,6 +18,7 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -71,6 +72,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -528,8 +530,17 @@ private fun ScreenshotPreview(
     }
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
+        var neighbors by remember { mutableStateOf(false) }
+        LaunchedEffect(pagerState.currentPage) {
+            neighbors = false
+            delay(600)
+            neighbors = true
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -542,12 +553,16 @@ private fun ScreenshotPreview(
                 key = { screenshots[it].full },
                 modifier = Modifier.fillMaxSize()
             ) { page ->
-                AsyncImage(
-                    model = screenshots[page].full,
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize()
-                )
+                val current = page == pagerState.currentPage
+                if (current || neighbors) {
+                    AsyncImage(
+                        model = screenshots[page].full,
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        onSuccess = { if (current) neighbors = true },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
             Text(
                 text = "${pagerState.currentPage + 1} / ${screenshots.size}",
@@ -555,6 +570,7 @@ private fun ScreenshotPreview(
                 color = Color.White.copy(alpha = 0.85f),
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
                     .padding(bottom = Spacing.lg)
                     .background(Color.Black.copy(alpha = 0.45f), CircleShape)
                     .padding(horizontal = Spacing.md, vertical = Spacing.xs)
