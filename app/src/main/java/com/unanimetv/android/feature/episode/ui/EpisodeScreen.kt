@@ -65,6 +65,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -289,12 +290,19 @@ private fun EpisodeContent(
         scrollState.animateScrollTo(0)
     }
 
+    val topInset = (LocalConfiguration.current.screenHeightDp * 0.015f).dp
+
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
-                .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.lg, bottom = ShellClearance)
+                .padding(
+                    start = Spacing.lg,
+                    end = Spacing.lg,
+                    top = Spacing.lg + topInset,
+                    bottom = ShellClearance
+                )
         ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
