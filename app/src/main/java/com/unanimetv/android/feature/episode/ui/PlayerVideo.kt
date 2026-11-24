@@ -267,18 +267,6 @@ fun PlayerVideo(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.size(Spacing.xs))
-                    IconButton(
-                        onClick = { settingsOpen = !settingsOpen },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_tabler_settings),
-                            contentDescription = "Configuración",
-                            tint = if (settingsOpen) MaterialTheme.colorScheme.primary else Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
                 }
             }
         }
@@ -287,8 +275,8 @@ fun PlayerVideo(
             enter = fadeIn(tween(150)),
             exit = fadeOut(tween(150)),
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = edgePadding, bottom = 48.dp)
+                .align(Alignment.TopEnd)
+                .padding(end = edgePadding, top = edgePadding + 44.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -319,14 +307,7 @@ fun PlayerVideo(
                 }
             }
         }
-        AnimatedVisibility(
-            visible = fullscreen && controlsVisible && !title.isNullOrBlank(),
-            enter = fadeIn(tween(250)),
-            exit = fadeOut(tween(250)),
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(start = edgePadding, top = edgePadding)
-        ) {
+        if (fullscreen && controlsVisible && !title.isNullOrBlank()) {
             Text(
                 text = title.orEmpty(),
                 style = if (wide) {
@@ -338,6 +319,8 @@ fun PlayerVideo(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = edgePadding, top = edgePadding)
                     .background(
                         Brush.horizontalGradient(
                             listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)
@@ -346,6 +329,23 @@ fun PlayerVideo(
                     )
                     .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
             )
+        }
+        if (controlsVisible) {
+            IconButton(
+                onClick = { settingsOpen = !settingsOpen },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(end = edgePadding, top = edgePadding)
+                    .size(40.dp)
+                    .background(Color.Black.copy(alpha = 0.35f), CircleShape)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_tabler_settings),
+                    contentDescription = "Configuración",
+                    tint = if (settingsOpen) MaterialTheme.colorScheme.primary else Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
         }
     }
 }
