@@ -18,6 +18,9 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -81,7 +84,6 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import coil3.compose.AsyncImage
-import coil3.compose.AsyncImagePainter
 import com.notanime.es.extractor.StreamInfo
 import com.notanime.es.scraper.EpisodeEntry
 import com.notanime.es.scraper.EpisodeScreenshot
@@ -375,8 +377,9 @@ private fun EpisodeContent(
         )
         previewIndex?.let { index ->
             ScreenshotPreview(
-                screenshot = uiState.gallery[index],
-                fileName = ImageDownloader.safeFileName(uiState.title ?: "episodio", index),
+                screenshots = uiState.gallery,
+                initialIndex = index,
+                fileNamePrefix = uiState.title ?: "episodio",
                 onDismiss = { previewIndex = null }
             )
         }
@@ -457,14 +460,17 @@ private fun ScreenshotGallery(
 
 @Composable
 private fun ScreenshotPreview(
-    screenshot: EpisodeScreenshot,
-    fileName: String,
+    screenshots: List<EpisodeScreenshot>,
+    initialIndex: Int,
+    fileNamePrefix: String,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var downloading by remember { mutableStateOf(false) }
+    var pending by remember { mutableStateOf<EpisodeScreenshot?>(null) }
     val rotation = remember { Animatable(0f) }
+    val pagerState = rememberPagerState(initialPage = initialIndex) { screenshots.size }
     LaunchedEffect(downloading) {
         if (downloading) {
             while (downloading) {
@@ -477,11 +483,18 @@ private fun ScreenshotPreview(
             rotation.snapTo(0f)
         }
     }
-    val download: () -> Unit = {
+    val download: (EpisodeScreenshot) -> Unit = { screenshot ->
         if (!downloading) {
             downloading = true
             scope.launch {
-                runCatching { ImageDownloader.download(context, screenshot.full, fileName) }
+                val index = screenshots.indexOf(screenshot).coerceAtLeast(0)
+                runCatching {
+                    ImageDownloader.download(
+                        context,
+                        screenshot.full,
+                        ImageDownloader.safeFileName(fileNamePrefix, index)
+                    )
+                }
                     .onSuccess {
                         UnAnimeLog.d("download", "ok: $it")
                         Toast.makeText(context, "Imagen descargada en Descargas", Toast.LENGTH_SHORT).show()
@@ -496,52 +509,66 @@ private fun ScreenshotPreview(
     }
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { if (it) download() }
+    ) { granted ->
+        val screenshot = pending
+        pending = null
+        if (granted && screenshot != null) download(screenshot)
+    }
+    val requestDownload: (EpisodeScreenshot) -> Unit = { screenshot ->
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            download(screenshot)
+        } else {
+            pending = screenshot
+            permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+    }
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        var aspect by remember { mutableStateOf(16f / 9f) }
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.3f)),
-            contentAlignment = Alignment.Center
+                .background(Color.Black.copy(alpha = 0.92f))
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .aspectRatio(aspect)
-            ) {
+            HorizontalPager(
+                state = pagerState,
+                contentPadding = PaddingValues(horizontal = Spacing.xxl),
+                pageSpacing = Spacing.lg,
+                key = { screenshots[it].full },
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
                 AsyncImage(
-                    model = screenshot.full,
+                    model = screenshots[page].full,
                     contentDescription = null,
-                    contentScale = ContentScale.FillBounds,
-                    onState = { state ->
-                        val size = (state as? AsyncImagePainter.State.Success)?.painter?.intrinsicSize
-                        if (size != null && size.width > 0 && size.height > 0) {
-                            aspect = size.width / size.height
-                        }
-                    },
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize()
                 )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(Spacing.lg)
-                ) {
-                    IconButton(
+            }
+            Text(
+                text = "${pagerState.currentPage + 1} / ${screenshots.size}",
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White.copy(alpha = 0.85f),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = Spacing.lg)
+                    .background(Color.Black.copy(alpha = 0.45f), CircleShape)
+                    .padding(horizontal = Spacing.md, vertical = Spacing.xs)
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(Spacing.lg)
+            ) {
+                IconButton(
                     onClick = {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
-                            ContextCompat.checkSelfPermission(
-                                context, Manifest.permission.WRITE_EXTERNAL_STORAGE
-                            ) == PackageManager.PERMISSION_GRANTED
-                        ) {
-                            download()
-                        } else {
-                            permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        }
+                        screenshots.getOrNull(pagerState.currentPage)?.let(requestDownload)
                     },
                     modifier = Modifier.background(Color.Black.copy(alpha = 0.45f), CircleShape)
                 ) {
@@ -561,7 +588,6 @@ private fun ScreenshotPreview(
                         contentDescription = "Cerrar",
                         tint = Color.White
                     )
-                }
                 }
             }
         }
