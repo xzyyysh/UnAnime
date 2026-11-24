@@ -337,6 +337,7 @@ private fun EpisodeContent(
             backdropUrl = uiState.image,
             started = started,
             fullscreenActive = fullscreen,
+            title = uiState.title,
             stream = stream,
             qualityIndex = safeQualityIndex,
             player = controller,
@@ -388,6 +389,8 @@ private fun EpisodeContent(
             ) {
                 PlayerVideo(
                     player = controller!!,
+                    title = uiState.title,
+                    fullscreen = true,
                     onToggleFullscreen = { fullscreen = false },
                     modifier = Modifier.fillMaxSize()
                 )
@@ -575,6 +578,7 @@ private fun PlayerSurface(
     backdropUrl: String?,
     started: Boolean,
     fullscreenActive: Boolean,
+    title: String?,
     stream: StreamInfo?,
     qualityIndex: Int,
     player: Player?,
@@ -606,6 +610,8 @@ private fun PlayerSurface(
             )
             player != null && stream != null && !fullscreenActive -> PlayerVideo(
                 player = player,
+                title = title,
+                fullscreen = false,
                 onToggleFullscreen = onToggleFullscreen,
                 modifier = Modifier.fillMaxSize()
             )

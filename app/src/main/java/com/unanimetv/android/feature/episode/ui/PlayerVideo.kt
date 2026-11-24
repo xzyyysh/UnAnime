@@ -39,8 +39,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.Player
@@ -61,6 +64,8 @@ private val SPEEDS = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f)
 @Composable
 fun PlayerVideo(
     player: Player,
+    title: String?,
+    fullscreen: Boolean,
     onToggleFullscreen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -75,6 +80,8 @@ fun PlayerVideo(
     var controlsVisible by remember { mutableStateOf(true) }
     var settingsOpen by remember { mutableStateOf(false) }
     var speed by remember { mutableStateOf(1f) }
+    val wide = LocalConfiguration.current.screenWidthDp >= 600
+    val edgePadding = if (wide) Spacing.xl else Spacing.md
 
     DisposableEffect(player) {
         val listener = object : Player.Listener {
@@ -250,17 +257,6 @@ fun PlayerVideo(
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     IconButton(
-                        onClick = { settingsOpen = !settingsOpen },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_tabler_settings),
-                            contentDescription = "Configuración",
-                            tint = if (settingsOpen) MaterialTheme.colorScheme.primary else Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    IconButton(
                         onClick = onToggleFullscreen,
                         modifier = Modifier.size(32.dp)
                     ) {
@@ -268,6 +264,18 @@ fun PlayerVideo(
                             painter = painterResource(R.drawable.ic_tabler_maximize),
                             contentDescription = "Pantalla completa",
                             tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.size(Spacing.xs))
+                    IconButton(
+                        onClick = { settingsOpen = !settingsOpen },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_tabler_settings),
+                            contentDescription = "Configuración",
+                            tint = if (settingsOpen) MaterialTheme.colorScheme.primary else Color.White,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -280,7 +288,7 @@ fun PlayerVideo(
             exit = fadeOut(tween(150)),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = Spacing.md, bottom = 76.dp)
+                .padding(end = edgePadding, bottom = 48.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -310,6 +318,34 @@ fun PlayerVideo(
                     }
                 }
             }
+        }
+        AnimatedVisibility(
+            visible = fullscreen && controlsVisible && !title.isNullOrBlank(),
+            enter = fadeIn(tween(250)),
+            exit = fadeOut(tween(250)),
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = edgePadding, top = edgePadding)
+        ) {
+            Text(
+                text = title.orEmpty(),
+                style = if (wide) {
+                    MaterialTheme.typography.titleMedium
+                } else {
+                    MaterialTheme.typography.titleSmall
+                },
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)
+                        ),
+                        RoundedCornerShape(50)
+                    )
+                    .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
+            )
         }
     }
 }
