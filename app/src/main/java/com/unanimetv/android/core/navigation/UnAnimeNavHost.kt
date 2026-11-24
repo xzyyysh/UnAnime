@@ -62,6 +62,7 @@ fun UnAnimeNavHost(
         composable(FAVORITES_ROUTE) {
             FavoritesScreen(
                 onTitleClick = { navController.navigate(titleRoute(it)) },
+                onEpisodeClick = { navController.navigate(episodeRoute(it)) },
                 onBack = { navController.popBackStack() }
             )
         }

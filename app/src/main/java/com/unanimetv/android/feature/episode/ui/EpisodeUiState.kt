@@ -9,6 +9,7 @@ data class EpisodeUiState(
     val error: String? = null,
     val url: String = "",
     val title: String? = null,
+    val animeTitle: String? = null,
     val titleUrl: String? = null,
     val image: String? = null,
     val prevUrl: String? = null,

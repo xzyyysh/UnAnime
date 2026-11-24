@@ -14,10 +14,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items as lazyItems
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -53,21 +57,27 @@ import com.unanimetv.android.R
 import com.unanimetv.android.core.designsystem.component.EmptyState
 import com.unanimetv.android.core.designsystem.tokens.Spacing
 import com.unanimetv.android.core.favorites.FavoriteAnime
+import com.unanimetv.android.core.favorites.FavoriteEpisode
 import com.unanimetv.android.core.favorites.FavoritesStore
 
 @Composable
 fun FavoritesScreen(
     onTitleClick: (String) -> Unit,
+    onEpisodeClick: (String) -> Unit,
     onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val favorites by FavoritesStore.favorites.collectAsState()
+    val episodes by FavoritesStore.episodes.collectAsState()
     val context = LocalContext.current
     LaunchedEffect(Unit) { FavoritesStore.init(context) }
+    var tab by remember { mutableStateOf(0) }
     var selecting by remember { mutableStateOf(false) }
     val selected = remember { mutableListOf<String>().toMutableStateList() }
     var confirmDelete by remember { mutableStateOf(false) }
     var pendingRemove by remember { mutableStateOf<String?>(null) }
+    val showEpisodes = tab == 1
+    val activeCount = if (showEpisodes) episodes.size else favorites.size
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -101,13 +111,70 @@ fun FavoritesScreen(
                     }) {
                         Text(text = "Cancelar")
                     }
-                } else if (favorites.isNotEmpty()) {
+                } else if (activeCount > 0) {
                     TextButton(onClick = { selecting = true }) {
                         Text(text = "Seleccionar")
                     }
                 }
             }
-            if (favorites.isEmpty()) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                modifier = Modifier.padding(horizontal = Spacing.lg)
+            ) {
+                FavoriteTab(
+                    label = "Animes",
+                    count = favorites.size,
+                    selected = !showEpisodes,
+                    onClick = {
+                        tab = 0
+                        selecting = false
+                        selected.clear()
+                    }
+                )
+                FavoriteTab(
+                    label = "Episodios",
+                    count = episodes.size,
+                    selected = showEpisodes,
+                    onClick = {
+                        tab = 1
+                        selecting = false
+                        selected.clear()
+                    }
+                )
+            }
+            if (showEpisodes && episodes.isEmpty()) {
+                EmptyState(
+                    message = "Sin episodios aún. Agrégalos desde el menú ⋮ del episodio."
+                )
+            } else if (showEpisodes) {
+                LazyColumn(
+                    contentPadding = PaddingValues(
+                        start = Spacing.lg,
+                        end = Spacing.lg,
+                        top = Spacing.md,
+                        bottom = 120.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    lazyItems(episodes, key = { it.url }) { episode ->
+                        EpisodeFavoriteRow(
+                            episode = episode,
+                            selecting = selecting,
+                            selected = episode.url in selected,
+                            onClick = {
+                                if (selecting) {
+                                    if (episode.url in selected) selected.remove(episode.url)
+                                    else selected.add(episode.url)
+                                } else {
+                                    onEpisodeClick(episode.url)
+                                }
+                            },
+                            onRemove = { pendingRemove = episode.url }
+                        )
+                    }
+                }
+            } else if (favorites.isEmpty()) {
                 EmptyState(
                     message = "Sin favoritos aún. Agrega animes desde su página con el menú ⋮"
                 )
@@ -160,7 +227,8 @@ fun FavoritesScreen(
         DeleteConfirmDialog(
             count = selected.size,
             onConfirm = {
-                FavoritesStore.removeUrls(selected)
+                if (showEpisodes) FavoritesStore.removeEpisodeUrls(selected)
+                else FavoritesStore.removeUrls(selected)
                 selected.clear()
                 selecting = false
                 confirmDelete = false
@@ -172,7 +240,8 @@ fun FavoritesScreen(
         DeleteConfirmDialog(
             count = 1,
             onConfirm = {
-                FavoritesStore.remove(url)
+                if (showEpisodes) FavoritesStore.removeEpisode(url)
+                else FavoritesStore.remove(url)
                 pendingRemove = null
             },
             onDismiss = { pendingRemove = null }
@@ -309,6 +378,148 @@ private fun FavoriteCard(
                     painter = painterResource(R.drawable.ic_tabler_dots_vertical),
                     contentDescription = "Más opciones",
                     tint = Color.White
+                )
+            }
+            DropdownMenu(
+                expanded = menuOpen,
+                onDismissRequest = { menuOpen = false },
+                shape = MaterialTheme.shapes.medium
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Quitar de favoritos") },
+                    onClick = {
+                        menuOpen = false
+                        onRemove()
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FavoriteTab(
+    label: String,
+    count: Int,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val background = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+    val content = if (selected) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(background)
+            .clickable(onClick = onClick)
+            .padding(horizontal = Spacing.md, vertical = Spacing.sm)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = content
+        )
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.labelSmall,
+            color = content.copy(alpha = 0.7f)
+        )
+    }
+}
+
+@Composable
+private fun EpisodeFavoriteRow(
+    episode: FavoriteEpisode,
+    selecting: Boolean,
+    selected: Boolean,
+    onClick: () -> Unit,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .then(
+                if (selected) {
+                    Modifier.border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = MaterialTheme.shapes.medium
+                    )
+                } else {
+                    Modifier
+                }
+            )
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .clickable(onClick = onClick)
+    ) {
+        Box(
+            modifier = Modifier
+                .width(112.dp)
+                .aspectRatio(16f / 9f)
+                .clip(MaterialTheme.shapes.small)
+        ) {
+            AsyncImage(
+                model = episode.image.takeIf { it.isNotEmpty() },
+                contentDescription = episode.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f)
+            )
+            if (selecting && selected) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(Spacing.xs)
+                        .background(MaterialTheme.colorScheme.primary, CircleShape)
+                        .padding(3.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_tabler_check),
+                        contentDescription = "Seleccionado",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            }
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = Spacing.md, vertical = Spacing.sm)
+        ) {
+            episode.animeTitle?.let { anime ->
+                Text(
+                    text = anime,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Text(
+                text = episode.title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Box {
+            IconButton(onClick = { menuOpen = true }) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_tabler_dots_vertical),
+                    contentDescription = "Más opciones",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             DropdownMenu(

@@ -88,10 +88,16 @@ class EpisodeViewModel(
                 val entry = episode.seasonEpisodes
                     .flatMap { it.episodes }
                     .firstOrNull { it.url == currentUrl }
+                val entryTitle = entry?.title?.takeIf { it.isNotEmpty() }
                 _uiState.value = EpisodeUiState(
                     isLoading = false,
                     url = currentUrl,
-                    title = entry?.title?.takeIf { it.isNotEmpty() } ?: episode.title,
+                    title = entryTitle ?: episode.title,
+                    animeTitle = if (entryTitle != null) {
+                        episode.title?.substringBefore(" - ")?.takeIf { it.isNotBlank() }
+                    } else {
+                        null
+                    },
                     titleUrl = episode.nav.titleUrl?.absoluteUrl(),
                     image = episode.image ?: entry?.image?.takeIf { it.isNotEmpty() },
                     prevUrl = episode.nav.prev?.absoluteUrl(),

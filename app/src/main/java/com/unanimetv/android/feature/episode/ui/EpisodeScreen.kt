@@ -97,6 +97,8 @@ import com.unanimetv.android.R
 import com.unanimetv.android.core.designsystem.component.EmptyState
 import com.unanimetv.android.core.designsystem.component.LoadingState
 import com.unanimetv.android.core.designsystem.tokens.Spacing
+import com.unanimetv.android.core.favorites.FavoriteEpisode
+import com.unanimetv.android.core.favorites.FavoritesStore
 import com.unanimetv.android.core.media.ImageDownloader
 import com.unanimetv.android.core.playback.CurrentStream
 import com.unanimetv.android.core.playback.PlayerFullscreen
@@ -149,6 +151,10 @@ private fun EpisodeContent(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val episodeFavorites by FavoritesStore.episodes.collectAsState()
+    val isEpisodeFavorite = episodeFavorites.any { it.url == uiState.url }
+
+    LaunchedEffect(Unit) { FavoritesStore.init(context) }
 
     var controller by remember { mutableStateOf<MediaController?>(null) }
     var started by remember { mutableStateOf(false) }
@@ -329,6 +335,28 @@ private fun EpisodeContent(
             )
             LinkMenu(
                 url = uiState.url,
+                isFavorite = isEpisodeFavorite,
+                onToggleFavorite = {
+                    if (isEpisodeFavorite) {
+                        FavoritesStore.removeEpisode(uiState.url)
+                    } else {
+                        FavoritesStore.addEpisode(
+                            FavoriteEpisode(
+                                url = uiState.url,
+                                title = uiState.title ?: "Episodio",
+                                image = uiState.image.orEmpty(),
+                                animeTitle = uiState.animeTitle,
+                                animeUrl = uiState.titleUrl,
+                                addedAt = System.currentTimeMillis()
+                            )
+                        )
+                    }
+                    Toast.makeText(
+                        context,
+                        if (isEpisodeFavorite) "Quitado de favoritos" else "Agregado a favoritos",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
                 onReload = {
                     // streams die or get blocked mid-session, this forces a cold re-scrape and server re-pick
                     started = false
