@@ -3,11 +3,11 @@ package com.unanimetv.android.core.network
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.webkit.CookieManager
-import android.webkit.WebSettings
 import android.webkit.WebView
 import com.notanime.es.NotAnimeClient
 import com.notanime.es.NotAnimeConfig
 import com.notanime.es.net.DirectFetcher
+import com.notanime.es.net.WebViewHttp
 import com.notanime.es.util.DebugCapture
 import com.notanime.es.util.UnAnimeLog
 import java.io.File
@@ -18,29 +18,17 @@ object ApiClient {
 
     @Volatile private var appContext: Context? = null
 
-    @Volatile private var syncedUserAgent: String? = null
-
     fun init(context: Context) {
         val app = context.applicationContext
         appContext = app
-        com.notanime.es.net.CronetHttp.init(app)
+        WebViewHttp.init(app)
         DebugCapture.dir = File(app.cacheDir, "captures").apply { mkdirs() }
         if (app.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
             WebView.setWebContentsDebuggingEnabled(true)
         }
     }
 
-    private fun httpClient(): NotAnimeClient = NotAnimeClient(
-        DirectFetcher(
-            userAgent = syncedUserAgent,
-            cookieProvider = {
-                CookieManager.getInstance().getCookie(NotAnimeConfig.ORIGIN)
-            }
-        )
-    )
-
-    private fun webViewClient(context: Context): NotAnimeClient =
-        NotAnimeClient(WebViewFetcher(context))
+    private fun client(): NotAnimeClient = NotAnimeClient(DirectFetcher())
 
     private fun isChallenge(e: Exception): Boolean {
         val message = e.message ?: return false
@@ -48,22 +36,20 @@ object ApiClient {
     }
 
     private suspend fun <T> call(block: suspend (NotAnimeClient) -> T): T {
-        val context = appContext ?: throw IllegalStateException("ApiClient not initialized")
+        appContext ?: throw IllegalStateException("ApiClient not initialized")
         return try {
-            block(httpClient())
+            block(client())
         } catch (e: Exception) {
             if (!isChallenge(e)) throw e
             UnAnimeLog.w("cloudflare", "challenge detected, opening gate")
             val solved = CloudflareGate.solve(CLEARANCE_URL)
             if (!solved) throw e
-            syncedUserAgent = WebSettings.getDefaultUserAgent(context)
-            com.notanime.es.net.CronetHttp.configure(defaultUserAgent = syncedUserAgent)
             try {
-                block(httpClient())
+                block(client())
             } catch (e2: Exception) {
                 if (!isChallenge(e2)) throw e2
-                UnAnimeLog.w("cloudflare", "still blocked, fetching via webview")
-                block(webViewClient(context))
+                UnAnimeLog.w("cloudflare", "still blocked after gate")
+                throw e2
             }
         }
     }
