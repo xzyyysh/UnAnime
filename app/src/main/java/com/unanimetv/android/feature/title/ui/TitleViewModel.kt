@@ -21,6 +21,10 @@ class TitleViewModel(
         load()
     }
 
+    fun selectSeason(season: Int) {
+        _uiState.update { it.copy(selectedSeason = season) }
+    }
+
     private fun load() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }

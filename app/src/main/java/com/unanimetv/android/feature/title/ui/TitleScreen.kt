@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -34,12 +35,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +51,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -87,6 +89,8 @@ fun TitleScreen(
         )
         else -> TitleContent(
             data = uiState.data,
+            selectedSeason = uiState.selectedSeason,
+            onSeasonSelect = viewModel::selectSeason,
             onBack = onBack,
             onEpisodeClick = onEpisodeClick,
             modifier = modifier
@@ -97,6 +101,8 @@ fun TitleScreen(
 @Composable
 private fun TitleContent(
     data: TitleData?,
+    selectedSeason: Int?,
+    onSeasonSelect: (Int) -> Unit,
     onBack: () -> Unit,
     onEpisodeClick: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -105,22 +111,20 @@ private fun TitleContent(
     val context = LocalContext.current
     val favorites by FavoritesStore.favorites.collectAsState()
     val isFavorite = favorites.any { it.url == data.url }
-    var selectedSeason by remember(data.url) {
-        mutableIntStateOf(data.seasons.firstOrNull()?.season ?: 0)
-    }
+    val wide = LocalConfiguration.current.screenWidthDp >= 600
     val season = data.seasons.firstOrNull { it.season == selectedSeason } ?: data.seasons.firstOrNull()
+    val activeSeason = season?.season ?: 0
     var previewArtwork by remember { mutableStateOf(false) }
+    val infoScroll = rememberScrollState()
+    val episodesScroll = rememberScrollState()
+    val pageScroll = rememberScrollState()
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(Spacing.lg)
-    ) {
+    Column(modifier = modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .statusBarsPadding(),
+                .statusBarsPadding()
+                .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
@@ -155,7 +159,84 @@ private fun TitleContent(
                 }
             )
         }
-        Header(data = data, onArtworkClick = { previewArtwork = true })
+        if (wide) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = Spacing.lg, end = Spacing.lg)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(0.42f)
+                        .fillMaxHeight()
+                        .verticalScroll(infoScroll)
+                        .padding(end = Spacing.xl, bottom = BottomClearance)
+                ) {
+                    TitleInfo(
+                        data = data,
+                        posterWidth = 176.dp,
+                        onArtworkClick = { previewArtwork = true }
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(0.58f)
+                        .fillMaxHeight()
+                        .verticalScroll(episodesScroll)
+                        .padding(bottom = BottomClearance)
+                ) {
+                    EpisodesSection(
+                        data = data,
+                        selectedSeason = activeSeason,
+                        onSeasonSelect = onSeasonSelect,
+                        onEpisodeClick = onEpisodeClick,
+                        modifier = Modifier.padding(top = Spacing.sm)
+                    )
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(pageScroll)
+                    .padding(horizontal = Spacing.lg)
+                    .padding(bottom = BottomClearance)
+            ) {
+                TitleInfo(
+                    data = data,
+                    posterWidth = 120.dp,
+                    onArtworkClick = { previewArtwork = true }
+                )
+                if (data.seasons.any { it.episodes.isNotEmpty() }) {
+                    EpisodesSection(
+                        data = data,
+                        selectedSeason = activeSeason,
+                        onSeasonSelect = onSeasonSelect,
+                        onEpisodeClick = onEpisodeClick,
+                        modifier = Modifier.padding(top = Spacing.sm)
+                    )
+                }
+            }
+        }
+    }
+    if (previewArtwork) {
+        ArtworkPreview(
+            url = data.poster,
+            title = data.title,
+            onDismiss = { previewArtwork = false }
+        )
+    }
+}
+
+@Composable
+private fun TitleInfo(
+    data: TitleData,
+    posterWidth: Dp,
+    onArtworkClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Header(data = data, posterWidth = posterWidth, onArtworkClick = onArtworkClick)
         if (data.genres.isNotEmpty()) {
             GenreRow(data = data, modifier = Modifier.padding(top = Spacing.md))
         }
@@ -171,26 +252,18 @@ private fun TitleContent(
         if (data.cast.isNotEmpty()) {
             CastRow(data = data)
         }
-        if (season != null && season.episodes.isNotEmpty()) {
-            EpisodesSection(
-                data = data,
-                selectedSeason = selectedSeason,
-                onSeasonSelect = { selectedSeason = it },
-                onEpisodeClick = onEpisodeClick
-            )
-        }
-    }
-    if (previewArtwork) {
-        ArtworkPreview(
-            url = data.poster,
-            title = data.title,
-            onDismiss = { previewArtwork = false }
-        )
     }
 }
 
+private val BottomClearance = 120.dp
+
 @Composable
-private fun Header(data: TitleData, onArtworkClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun Header(
+    data: TitleData,
+    posterWidth: Dp,
+    onArtworkClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Spacing.lg)
@@ -200,7 +273,7 @@ private fun Header(data: TitleData, onArtworkClick: () -> Unit, modifier: Modifi
             contentDescription = data.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier
-                .width(120.dp)
+                .width(posterWidth)
                 .aspectRatio(2f / 3f)
                 .clip(MaterialTheme.shapes.medium)
                 .clickable(onClick = onArtworkClick)
