@@ -3,7 +3,6 @@ package com.unanimetv.android.feature.title.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -38,7 +37,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
@@ -167,66 +165,58 @@ private fun TitleContent(
 
 @Composable
 private fun Header(data: TitleData, modifier: Modifier = Modifier) {
-    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
-        val artworkWidth = when {
-            maxWidth >= 840.dp -> 208.dp
-            maxWidth >= 600.dp -> 168.dp
-            else -> 128.dp
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.lg)
-        ) {
-            AsyncImage(
-                model = data.poster,
-                contentDescription = data.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .width(artworkWidth)
-                    .aspectRatio(2f / 3f)
-                    .shadow(6.dp, MaterialTheme.shapes.large)
-                    .clip(MaterialTheme.shapes.large)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.lg)
+    ) {
+        AsyncImage(
+            model = data.poster,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .width(120.dp)
+                .aspectRatio(2f / 3f)
+                .clip(MaterialTheme.shapes.medium)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = data.title,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
             )
-            Column(modifier = Modifier.weight(1f)) {
+            val originalTitle = data.originalTitle
+            if (originalTitle != null) {
                 Text(
-                    text = data.title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
+                    text = originalTitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = Spacing.xs)
                 )
-                val originalTitle = data.originalTitle
-                if (originalTitle != null) {
-                    Text(
-                        text = originalTitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = Spacing.xs)
-                    )
-                }
-                data.rating.value?.let { value ->
-                    Text(
-                        text = "★ ${value.toInt() / 10.0}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = Spacing.sm)
-                    )
-                }
-                val meta = buildList {
-                    data.network?.let { add(it) }
-                    data.runtime?.let { add(it) }
-                    data.seasonsCount?.let { add("$it temporadas") }
-                    data.episodesCount?.let { add("$it episodios") }
-                }
-                if (meta.isNotEmpty()) {
-                    Text(
-                        text = meta.joinToString(" · "),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = Spacing.sm)
-                    )
-                }
+            }
+            data.rating.value?.let { value ->
+                Text(
+                    text = "★ ${value.toInt() / 10.0}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = Spacing.sm)
+                )
+            }
+            val meta = buildList {
+                data.network?.let { add(it) }
+                data.runtime?.let { add(it) }
+                data.seasonsCount?.let { add("$it temporadas") }
+                data.episodesCount?.let { add("$it episodios") }
+            }
+            if (meta.isNotEmpty()) {
+                Text(
+                    text = meta.joinToString(" · "),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = Spacing.sm)
+                )
             }
         }
     }
