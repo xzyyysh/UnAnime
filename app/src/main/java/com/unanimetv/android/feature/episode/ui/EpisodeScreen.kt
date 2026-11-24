@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -54,6 +55,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -151,6 +153,8 @@ private fun EpisodeContent(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val surfaceScroll = rememberScrollState()
+    val listScroll = rememberScrollState()
     val episodeFavorites by FavoritesStore.episodes.collectAsState()
     val isEpisodeFavorite = episodeFavorites.any { it.url == uiState.url }
 
@@ -294,48 +298,70 @@ private fun EpisodeContent(
         controller?.stop()
         controller?.clearMediaItems()
         scrollState.animateScrollTo(0)
+        surfaceScroll.animateScrollTo(0)
+        listScroll.animateScrollTo(0)
     }
 
-    val topInset = (LocalConfiguration.current.screenHeightDp * 0.015f).dp
+    val configuration = LocalConfiguration.current
+    val topInset = (configuration.screenHeightDp * 0.015f).dp
+    val wide = configuration.screenWidthDp >= 600
+
+    val playerSlot = remember {
+        movableContentOf<PlayerSlotArgs> { args ->
+            PlayerSurface(
+                selectedServer = args.selectedServer,
+                languages = args.languages,
+                selectedLanguage = args.selectedLanguage,
+                isLoading = args.isLoading,
+                resolvingUrl = args.resolvingUrl,
+                backdropUrl = args.backdropUrl,
+                started = args.started,
+                fullscreenActive = args.fullscreenActive,
+                title = args.title,
+                stream = args.stream,
+                qualityIndex = args.qualityIndex,
+                player = args.player,
+                onSelectLanguage = args.onSelectLanguage,
+                onSelectServer = args.onSelectServer,
+                onPlay = args.onPlay,
+                onToggleFullscreen = args.onToggleFullscreen,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+    val slotArgs = PlayerSlotArgs(
+        selectedServer = uiState.selectedServer,
+        languages = uiState.languages,
+        selectedLanguage = uiState.selectedLanguage,
+        isLoading = uiState.isLoading,
+        resolvingUrl = uiState.resolvingUrl,
+        backdropUrl = uiState.image,
+        started = started,
+        fullscreenActive = fullscreen,
+        title = uiState.title,
+        stream = stream,
+        qualityIndex = safeQualityIndex,
+        player = controller,
+        onSelectLanguage = onSelectLanguage,
+        onSelectServer = onSelectServer,
+        onPlay = {
+            controller?.playWhenReady = true
+            started = true
+        },
+        onToggleFullscreen = { fullscreen = !fullscreen }
+    )
 
     Box(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(
-                    start = Spacing.lg,
-                    end = Spacing.lg,
-                    top = Spacing.lg + topInset,
-                    bottom = ShellClearance
-                )
-        ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_tabler_arrow_back),
-                    contentDescription = "Volver",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            Text(
-                text = uiState.title ?: "Episodio",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable(enabled = uiState.titleUrl != null) {
-                        uiState.titleUrl?.let(onTitleClick)
-                    }
-            )
-            LinkMenu(
+        Column(modifier = Modifier.fillMaxSize()) {
+            EpisodeTopBar(
+                title = uiState.title,
                 url = uiState.url,
                 isFavorite = isEpisodeFavorite,
+                titleEnabled = uiState.titleUrl != null,
+                onBack = onBack,
+                onTitleClick = {
+                    uiState.titleUrl?.let(onTitleClick)
+                },
                 onToggleFavorite = {
                     if (isEpisodeFavorite) {
                         FavoritesStore.removeEpisode(uiState.url)
@@ -358,7 +384,6 @@ private fun EpisodeContent(
                     ).show()
                 },
                 onReload = {
-                    // streams die or get blocked mid-session, this forces a cold re-scrape and server re-pick
                     started = false
                     loadedUrl = null
                     qualityIndex = 0
@@ -367,52 +392,99 @@ private fun EpisodeContent(
                     onReload()
                 }
             )
+            if (wide) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = Spacing.lg)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .weight(0.56f)
+                            .fillMaxHeight()
+                            .verticalScroll(surfaceScroll)
+                            .padding(bottom = ShellClearance)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = Spacing.sm + topInset)
+                        ) {
+                            playerSlot(slotArgs)
+                        }
+                        EpisodeNavBar(
+                            prevUrl = uiState.prevUrl,
+                            nextUrl = uiState.nextUrl,
+                            titleUrl = uiState.titleUrl,
+                            onOpenEpisode = onOpenEpisode,
+                            onTitleClick = onTitleClick,
+                            modifier = Modifier.padding(top = Spacing.lg)
+                        )
+                    }
+                    Column(
+                        modifier = Modifier
+                            .weight(0.44f)
+                            .fillMaxHeight()
+                            .verticalScroll(listScroll)
+                            .padding(start = Spacing.lg, bottom = ShellClearance)
+                    ) {
+                        if (uiState.gallery.isNotEmpty()) {
+                            ScreenshotGallery(
+                                screenshots = uiState.gallery,
+                                onSelect = { previewIndex = it },
+                                modifier = Modifier.padding(top = Spacing.sm + topInset)
+                            )
+                        }
+                        EpisodeList(
+                            seasons = uiState.seasons,
+                            currentUrl = uiState.url,
+                            onOpenEpisode = onOpenEpisode,
+                            modifier = Modifier.padding(top = Spacing.lg)
+                        )
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .padding(
+                            start = Spacing.lg,
+                            end = Spacing.lg,
+                            bottom = ShellClearance
+                        )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = Spacing.sm + topInset)
+                    ) {
+                        playerSlot(slotArgs)
+                    }
+                    EpisodeNavBar(
+                        prevUrl = uiState.prevUrl,
+                        nextUrl = uiState.nextUrl,
+                        titleUrl = uiState.titleUrl,
+                        onOpenEpisode = onOpenEpisode,
+                        onTitleClick = onTitleClick,
+                        modifier = Modifier.padding(top = Spacing.md)
+                    )
+                    if (uiState.gallery.isNotEmpty()) {
+                        ScreenshotGallery(
+                            screenshots = uiState.gallery,
+                            onSelect = { previewIndex = it },
+                            modifier = Modifier.padding(top = Spacing.lg)
+                        )
+                    }
+                    EpisodeList(
+                        seasons = uiState.seasons,
+                        currentUrl = uiState.url,
+                        onOpenEpisode = onOpenEpisode,
+                        modifier = Modifier.padding(top = Spacing.lg)
+                    )
+                }
+            }
         }
-        PlayerSurface(
-            selectedServer = uiState.selectedServer,
-            languages = uiState.languages,
-            selectedLanguage = uiState.selectedLanguage,
-            isLoading = uiState.isLoading,
-            resolvingUrl = uiState.resolvingUrl,
-            backdropUrl = uiState.image,
-            started = started,
-            fullscreenActive = fullscreen,
-            title = uiState.title,
-            stream = stream,
-            qualityIndex = safeQualityIndex,
-            player = controller,
-            onSelectLanguage = onSelectLanguage,
-            onSelectServer = onSelectServer,
-            onPlay = {
-                controller?.playWhenReady = true
-                started = true
-            },
-            onToggleFullscreen = { fullscreen = !fullscreen },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = Spacing.md)
-        )
-        EpisodeNavBar(
-            prevUrl = uiState.prevUrl,
-            nextUrl = uiState.nextUrl,
-            titleUrl = uiState.titleUrl,
-            onOpenEpisode = onOpenEpisode,
-            onTitleClick = onTitleClick,
-            modifier = Modifier.padding(top = Spacing.md)
-        )
-        if (uiState.gallery.isNotEmpty()) {
-            ScreenshotGallery(
-                screenshots = uiState.gallery,
-                onSelect = { previewIndex = it },
-                modifier = Modifier.padding(top = Spacing.lg)
-            )
-        }
-        EpisodeList(
-            seasons = uiState.seasons,
-            currentUrl = uiState.url,
-            onOpenEpisode = onOpenEpisode,
-            modifier = Modifier.padding(top = Spacing.lg)
-        )
         previewIndex?.let { index ->
             ScreenshotPreview(
                 screenshots = uiState.gallery,
@@ -420,7 +492,6 @@ private fun EpisodeContent(
                 fileNamePrefix = uiState.title ?: "episodio",
                 onDismiss = { previewIndex = null }
             )
-        }
         }
         if (fullscreen && controller != null && stream != null) {
             Box(
@@ -437,6 +508,70 @@ private fun EpisodeContent(
                 )
             }
         }
+    }
+}
+
+private data class PlayerSlotArgs(
+    val selectedServer: SourceServer?,
+    val languages: List<LanguageGroup>,
+    val selectedLanguage: String?,
+    val isLoading: Boolean,
+    val resolvingUrl: String?,
+    val backdropUrl: String?,
+    val started: Boolean,
+    val fullscreenActive: Boolean,
+    val title: String?,
+    val stream: StreamInfo?,
+    val qualityIndex: Int,
+    val player: Player?,
+    val onSelectLanguage: (String) -> Unit,
+    val onSelectServer: (SourceServer) -> Unit,
+    val onPlay: () -> Unit,
+    val onToggleFullscreen: () -> Unit
+)
+
+@Composable
+private fun EpisodeTopBar(
+    title: String?,
+    url: String,
+    isFavorite: Boolean,
+    titleEnabled: Boolean,
+    onBack: () -> Unit,
+    onTitleClick: () -> Unit,
+    onToggleFavorite: () -> Unit,
+    onReload: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBack) {
+            Icon(
+                painter = painterResource(R.drawable.ic_tabler_arrow_back),
+                contentDescription = "Volver",
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        Text(
+            text = title ?: "Episodio",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .weight(1f)
+                .clickable(enabled = titleEnabled, onClick = onTitleClick)
+        )
+        LinkMenu(
+            url = url,
+            isFavorite = isFavorite,
+            onToggleFavorite = onToggleFavorite,
+            onReload = onReload
+        )
     }
 }
 
