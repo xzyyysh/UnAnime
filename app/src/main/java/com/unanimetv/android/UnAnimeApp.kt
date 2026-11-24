@@ -41,7 +41,7 @@ import com.unanimetv.android.R
 import com.unanimetv.android.core.navigation.TopLevelDestination
 import com.unanimetv.android.core.navigation.UnAnimeNavHost
 import com.unanimetv.android.core.update.UpdateChecker
-import com.unanimetv.android.ui.CloudflareChallengeDialog
+import com.unanimetv.android.ui.GateDialog
 import com.unanimetv.android.ui.UpdateDialog
 
 private val ShellShape = RoundedCornerShape(28.dp)
@@ -78,7 +78,7 @@ fun UnAnimeApp() {
     }
 
     challengeUrl?.let { url ->
-        CloudflareChallengeDialog(
+        GateDialog(
             url = url,
             onDismiss = { CloudflareGate.dismiss() }
         )

@@ -25,7 +25,7 @@ import com.notanime.es.NotAnimeConfig
 import com.unanimetv.android.core.designsystem.tokens.Spacing
 
 @Composable
-fun CloudflareChallengeDialog(
+fun GateDialog(
     url: String,
     onDismiss: () -> Unit
 ) {
