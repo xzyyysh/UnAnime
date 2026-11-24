@@ -12,6 +12,7 @@ import kotlinx.coroutines.sync.withLock
 object CloudflareGate {
 
     private const val TIMEOUT_MS = 120_000L
+    private const val CLEARANCE_DOMAIN = ".animeonline.ninja"
 
     private val mutex = Mutex()
 
@@ -38,6 +39,13 @@ object CloudflareGate {
             UnAnimeLog.w("cloudflare", "gate timeout or dismissed without clearance")
         }
         solved
+    }
+
+    fun clear() {
+        val manager = CookieManager.getInstance()
+        val expired = "cf_clearance=; Domain=$CLEARANCE_DOMAIN; Path=/; Max-Age=0"
+        manager.setCookie(NotAnimeConfig.ORIGIN, expired)
+        manager.setCookie("https://animeonline.ninja", expired)
     }
 
     fun dismiss() {

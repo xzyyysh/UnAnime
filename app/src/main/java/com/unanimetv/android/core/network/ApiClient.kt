@@ -42,6 +42,7 @@ object ApiClient {
         } catch (e: Exception) {
             if (!isChallenge(e)) throw e
             UnAnimeLog.w("cloudflare", "challenge detected, opening gate")
+            CloudflareGate.clear()
             val solved = CloudflareGate.solve(CLEARANCE_URL)
             if (!solved) throw e
             try {
