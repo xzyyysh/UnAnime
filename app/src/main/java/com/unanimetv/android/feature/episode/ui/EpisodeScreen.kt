@@ -536,15 +536,14 @@ private fun ScreenshotPreview(
         )
     ) {
         var neighbors by remember { mutableStateOf(false) }
-        LaunchedEffect(pagerState.currentPage) {
-            neighbors = false
-            delay(600)
+        LaunchedEffect(Unit) {
+            delay(400)
             neighbors = true
         }
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.92f))
+                .background(Color.Black.copy(alpha = 0.55f))
         ) {
             HorizontalPager(
                 state = pagerState,
@@ -553,13 +552,12 @@ private fun ScreenshotPreview(
                 key = { screenshots[it].full },
                 modifier = Modifier.fillMaxSize()
             ) { page ->
-                val current = page == pagerState.currentPage
-                if (current || neighbors) {
+                if (page == initialIndex || neighbors) {
                     AsyncImage(
                         model = screenshots[page].full,
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
-                        onSuccess = { if (current) neighbors = true },
+                        onSuccess = { if (page == initialIndex) neighbors = true },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
