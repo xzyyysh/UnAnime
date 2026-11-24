@@ -51,6 +51,7 @@ fun AppChrome(
     onTitleClick: (String) -> Unit,
     onCatalogClick: (String, String) -> Unit,
     onFavoritesClick: () -> Unit = {},
+    selectedPath: String? = null,
     modifier: Modifier = Modifier,
     alwaysSolid: Boolean = false,
     content: @Composable BoxScope.() -> Unit
@@ -74,6 +75,7 @@ fun AppChrome(
             ) {
                 DrawerContent(
                     logoVariant = logoVariant,
+                    selectedPath = selectedPath,
                     onCatalogClick = onCatalogClick,
                     onFavoritesClick = onFavoritesClick
                 )
@@ -110,6 +112,7 @@ fun AppChrome(
             drawerContent = {
                 AppDrawer(
                     logoVariant = logoVariant,
+                    selectedPath = selectedPath,
                     onCatalogClick = { path, title ->
                         scope.launch { drawerState.close() }
                         onCatalogClick(path, title)
@@ -240,6 +243,7 @@ private fun ChromeTopBar(
 @Composable
 private fun AppDrawer(
     logoVariant: MutableIntState,
+    selectedPath: String?,
     onCatalogClick: (String, String) -> Unit,
     onFavoritesClick: () -> Unit
 ) {
@@ -248,15 +252,40 @@ private fun AppDrawer(
     ) {
         DrawerContent(
             logoVariant = logoVariant,
+            selectedPath = selectedPath,
             onCatalogClick = onCatalogClick,
             onFavoritesClick = onFavoritesClick
         )
     }
 }
 
+private data class DrawerEntry(val label: String, val icon: Int, val path: String)
+
+private val CatalogEntries = listOf(
+    DrawerEntry("Últimos episodios", R.drawable.ic_tabler_player_play, "episodio"),
+    DrawerEntry("Animes", R.drawable.ic_tabler_device_tv, "online"),
+    DrawerEntry("Películas", R.drawable.ic_tabler_movie, "pelicula"),
+    DrawerEntry("Temporadas", R.drawable.ic_tabler_calendar, "temporada")
+)
+
+private val GenreEntries = listOf(
+    DrawerEntry("En emisión", R.drawable.ic_tabler_flame, "genero/en-emision-1"),
+    DrawerEntry("Sin censura", R.drawable.ic_tabler_ban, "genero/sin-censura"),
+    DrawerEntry("Live Action", R.drawable.ic_tabler_world, "genero/live-action"),
+    DrawerEntry("Próximamente", R.drawable.ic_tabler_clock, "genero/proximamente"),
+    DrawerEntry("Blu-Ray / DVD", R.drawable.ic_tabler_disc, "genero/blu-ray-dvd-2"),
+    DrawerEntry("Ganadores de premios", R.drawable.ic_tabler_trophy, "genero/award-winning-anime")
+)
+
+private val FeaturedEntries = listOf(
+    DrawerEntry("Popular en la web", R.drawable.ic_tabler_trending_up, "tendencias"),
+    DrawerEntry("Mejores valorados", R.drawable.ic_tabler_star, "ratings")
+)
+
 @Composable
 private fun DrawerContent(
     logoVariant: MutableIntState,
+    selectedPath: String?,
     onCatalogClick: (String, String) -> Unit,
     onFavoritesClick: () -> Unit
 ) {
@@ -284,86 +313,39 @@ private fun DrawerContent(
         NavigationDrawerItem(
             icon = { Icon(painterResource(R.drawable.ic_tabler_star), contentDescription = null) },
             label = { Text("Favoritos") },
-            selected = false,
+            selected = selectedPath == FavoritesPath,
             onClick = onFavoritesClick
         )
         HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.sm))
         DrawerSection("Catálogos")
-        NavigationDrawerItem(
-            icon = { Icon(painterResource(R.drawable.ic_tabler_player_play), contentDescription = null) },
-            label = { Text("Últimos episodios") },
-            selected = false,
-            onClick = { onCatalogClick("episodio", "Últimos episodios") }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(painterResource(R.drawable.ic_tabler_device_tv), contentDescription = null) },
-            label = { Text("Animes") },
-            selected = false,
-            onClick = { onCatalogClick("online", "Animes") }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(painterResource(R.drawable.ic_tabler_movie), contentDescription = null) },
-            label = { Text("Películas") },
-            selected = false,
-            onClick = { onCatalogClick("pelicula", "Películas") }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(painterResource(R.drawable.ic_tabler_calendar), contentDescription = null) },
-            label = { Text("Temporadas") },
-            selected = false,
-            onClick = { onCatalogClick("temporada", "Temporadas") }
-        )
+        CatalogEntries.forEach { entry ->
+            DrawerItem(entry = entry, selectedPath = selectedPath, onCatalogClick = onCatalogClick)
+        }
         DrawerSection("Géneros")
-        NavigationDrawerItem(
-            icon = { Icon(painterResource(R.drawable.ic_tabler_flame), contentDescription = null) },
-            label = { Text("En emisión") },
-            selected = false,
-            onClick = { onCatalogClick("genero/en-emision-1", "En emisión") }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(painterResource(R.drawable.ic_tabler_ban), contentDescription = null) },
-            label = { Text("Sin censura") },
-            selected = false,
-            onClick = { onCatalogClick("genero/sin-censura", "Sin censura") }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(painterResource(R.drawable.ic_tabler_world), contentDescription = null) },
-            label = { Text("Live Action") },
-            selected = false,
-            onClick = { onCatalogClick("genero/live-action", "Live Action") }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(painterResource(R.drawable.ic_tabler_clock), contentDescription = null) },
-            label = { Text("Próximamente") },
-            selected = false,
-            onClick = { onCatalogClick("genero/proximamente", "Próximamente") }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(painterResource(R.drawable.ic_tabler_disc), contentDescription = null) },
-            label = { Text("Blu-Ray / DVD") },
-            selected = false,
-            onClick = { onCatalogClick("genero/blu-ray-dvd-2", "Blu-Ray / DVD") }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(painterResource(R.drawable.ic_tabler_trophy), contentDescription = null) },
-            label = { Text("Ganadores de premios") },
-            selected = false,
-            onClick = { onCatalogClick("genero/award-winning-anime", "Ganadores de premios") }
-        )
+        GenreEntries.forEach { entry ->
+            DrawerItem(entry = entry, selectedPath = selectedPath, onCatalogClick = onCatalogClick)
+        }
         DrawerSection("Destacados")
-        NavigationDrawerItem(
-            icon = { Icon(painterResource(R.drawable.ic_tabler_trending_up), contentDescription = null) },
-            label = { Text("Popular en la web") },
-            selected = false,
-            onClick = { onCatalogClick("tendencias", "Popular en la web") }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(painterResource(R.drawable.ic_tabler_star), contentDescription = null) },
-            label = { Text("Mejores valorados") },
-            selected = false,
-            onClick = { onCatalogClick("ratings", "Mejores valorados") }
-        )
+        FeaturedEntries.forEach { entry ->
+            DrawerItem(entry = entry, selectedPath = selectedPath, onCatalogClick = onCatalogClick)
+        }
     }
+}
+
+private const val FavoritesPath = "favoritos"
+
+@Composable
+private fun DrawerItem(
+    entry: DrawerEntry,
+    selectedPath: String?,
+    onCatalogClick: (String, String) -> Unit
+) {
+    NavigationDrawerItem(
+        icon = { Icon(painterResource(entry.icon), contentDescription = null) },
+        label = { Text(entry.label) },
+        selected = selectedPath == entry.path,
+        onClick = { onCatalogClick(entry.path, entry.label) }
+    )
 }
 
 @Composable

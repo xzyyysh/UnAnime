@@ -68,6 +68,7 @@ fun CatalogScreen(
         onTitleClick = onTitleClick,
         onCatalogClick = onCatalogClick,
         onFavoritesClick = onFavoritesClick,
+        selectedPath = path,
         modifier = modifier
     ) {
         when {
