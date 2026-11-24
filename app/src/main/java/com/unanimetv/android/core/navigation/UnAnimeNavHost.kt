@@ -34,18 +34,28 @@ fun UnAnimeNavHost(
         startDestination = TopLevelDestination.HOME.route,
         modifier = modifier,
         enterTransition = {
-            androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(280)) +
-                androidx.compose.animation.slideInVertically(androidx.compose.animation.core.tween(280)) { it / 24 }
+            androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(240)) +
+                androidx.compose.animation.slideInHorizontally(
+                    androidx.compose.animation.core.tween(320)
+                ) { it / 8 }
         },
         exitTransition = {
-            androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(200))
+            androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(180)) +
+                androidx.compose.animation.slideOutHorizontally(
+                    androidx.compose.animation.core.tween(260)
+                ) { -it / 16 }
         },
         popEnterTransition = {
-            androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(280))
+            androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(240)) +
+                androidx.compose.animation.slideInHorizontally(
+                    androidx.compose.animation.core.tween(320)
+                ) { -it / 8 }
         },
         popExitTransition = {
-            androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(220)) +
-                androidx.compose.animation.slideOutVertically(androidx.compose.animation.core.tween(220)) { it / 24 }
+            androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(180)) +
+                androidx.compose.animation.slideOutHorizontally(
+                    androidx.compose.animation.core.tween(260)
+                ) { it / 8 }
         }
     ) {
         composable(TopLevelDestination.HOME.route) {

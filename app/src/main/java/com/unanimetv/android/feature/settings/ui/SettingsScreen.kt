@@ -1,5 +1,6 @@
 package com.unanimetv.android.feature.settings.ui
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
@@ -88,8 +89,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             onClear = {
                 context.imageLoader.memoryCache?.clear()
                 context.imageLoader.diskCache?.clear()
-                File(context.cacheDir, "downloads").deleteRecursively()
-                File(context.cacheDir, "update").deleteRecursively()
+                cacheTargets(context).forEach { runCatching { it.deleteRecursively() } }
                 CurrentStream.clearCache(context)
                 cacheCleared = true
             }
@@ -420,20 +420,32 @@ private fun UpdateCard() {
     }
 }
 
+private fun cacheTargets(context: Context): List<File> {
+    val dataDir = context.applicationInfo.dataDir
+    val webView = File(dataDir, "app_webview")
+    return listOf(
+        File(context.cacheDir, "downloads"),
+        File(context.cacheDir, "update"),
+        File(context.cacheDir, "captures"),
+        File(webView, "Default/Code Cache"),
+        File(webView, "Default/GPUCache"),
+        File(webView, "GPUCache"),
+        File(webView, "Default/HTTP Cache")
+    )
+}
+
+private fun dirSize(file: File): Long =
+    if (file.exists()) file.walkTopDown().filter { it.isFile }.sumOf { it.length() } else 0L
+
 @Composable
 private fun CacheCard(
     cleared: Boolean,
     onClear: () -> Unit
 ) {
     val context = LocalContext.current
-    val sizeBytes = remember {
-        val downloads = File(context.cacheDir, "downloads")
-        val downloadsSize = downloads.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-        val update = File(context.cacheDir, "update")
-        val updateSize = update.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-        val stream = File(context.cacheDir, "stream_cache")
-        val streamSize = stream.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-        (context.imageLoader.diskCache?.size ?: 0L) + downloadsSize + updateSize + streamSize
+    val sizeBytes = remember(cleared) {
+        val dirs = cacheTargets(context).sumOf { dirSize(it) } + dirSize(File(context.cacheDir, "stream_cache"))
+        (context.imageLoader.diskCache?.size ?: 0L) + dirs
     }
     val sizeText = remember(sizeBytes) {
         val mb = sizeBytes / (1024.0 * 1024.0)
