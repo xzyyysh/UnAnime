@@ -2,7 +2,10 @@ package com.unanimetv.android.feature.title.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -18,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -28,7 +32,9 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
@@ -37,10 +43,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.util.Locale
 import coil3.compose.AsyncImage
@@ -96,6 +107,7 @@ private fun TitleContent(
         mutableIntStateOf(data.seasons.firstOrNull()?.season ?: 0)
     }
     val season = data.seasons.firstOrNull { it.season == selectedSeason } ?: data.seasons.firstOrNull()
+    var previewArtwork by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -136,7 +148,7 @@ private fun TitleContent(
                 }
             )
         }
-        Header(data = data)
+        Header(data = data, onArtworkClick = { previewArtwork = true })
         if (data.genres.isNotEmpty()) {
             GenreRow(data = data, modifier = Modifier.padding(top = Spacing.md))
         }
@@ -161,22 +173,30 @@ private fun TitleContent(
             )
         }
     }
+    if (previewArtwork) {
+        ArtworkPreview(
+            url = data.poster,
+            title = data.title,
+            onDismiss = { previewArtwork = false }
+        )
+    }
 }
 
 @Composable
-private fun Header(data: TitleData, modifier: Modifier = Modifier) {
+private fun Header(data: TitleData, onArtworkClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Spacing.lg)
     ) {
         AsyncImage(
             model = data.poster,
-            contentDescription = null,
+            contentDescription = data.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .width(120.dp)
                 .aspectRatio(2f / 3f)
                 .clip(MaterialTheme.shapes.medium)
+                .clickable(onClick = onArtworkClick)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
         )
         Column(modifier = Modifier.weight(1f)) {
@@ -216,6 +236,84 @@ private fun Header(data: TitleData, modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = Spacing.sm)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ArtworkPreview(
+    url: String,
+    title: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        var scale by remember { mutableFloatStateOf(1f) }
+        var offsetX by remember { mutableFloatStateOf(0f) }
+        var offsetY by remember { mutableFloatStateOf(0f) }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.94f)),
+            contentAlignment = Alignment.Center
+        ) {
+            AsyncImage(
+                model = url,
+                contentDescription = title,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(Spacing.lg)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        translationX = offsetX
+                        translationY = offsetY
+                    }
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            scale = (scale * zoom).coerceIn(1f, 5f)
+                            if (scale == 1f) {
+                                offsetX = 0f
+                                offsetY = 0f
+                            } else {
+                                val limitX = (scale - 1f) * size.width / 2f
+                                val limitY = (scale - 1f) * size.height / 2f
+                                offsetX = (offsetX + pan.x).coerceIn(-limitX, limitX)
+                                offsetY = (offsetY + pan.y).coerceIn(-limitY, limitY)
+                            }
+                        }
+                    }
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onDoubleTap = {
+                                if (scale > 1f) {
+                                    scale = 1f
+                                    offsetX = 0f
+                                    offsetY = 0f
+                                } else {
+                                    scale = 2.5f
+                                }
+                            }
+                        )
+                    }
+            )
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(Spacing.lg)
+                    .background(Color.Black.copy(alpha = 0.45f), CircleShape)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_tabler_x),
+                    contentDescription = "Cerrar",
+                    tint = Color.White
                 )
             }
         }
