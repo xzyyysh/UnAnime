@@ -34,7 +34,8 @@ object CloudflareGate {
         }
         _challengeUrl.value = null
         if (solved) {
-            UnAnimeLog.d("cloudflare", "cf_clearance acquired via gate")
+            CookieManager.getInstance().flush()
+            UnAnimeLog.d("cloudflare", "cf_clearance acquired via gate (persisted)")
         } else {
             UnAnimeLog.w("cloudflare", "gate timeout or dismissed without clearance")
         }
@@ -52,6 +53,7 @@ object CloudflareGate {
             manager.removeAllCookies(null)
             UnAnimeLog.w("cloudflare", "targeted clear failed, removed all cookies")
         }
+        manager.flush()
     }
 
     fun dismiss() {

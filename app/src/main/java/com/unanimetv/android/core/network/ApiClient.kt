@@ -24,6 +24,8 @@ object ApiClient {
         val app = context.applicationContext
         appContext = app
         com.notanime.es.net.CronetHttp.init(app)
+        syncedUserAgent = WebSettings.getDefaultUserAgent(app)
+        com.notanime.es.net.CronetHttp.configure(defaultUserAgent = syncedUserAgent)
         DebugCapture.dir = File(app.cacheDir, "captures").apply { mkdirs() }
         if (app.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
             WebView.setWebContentsDebuggingEnabled(true)
@@ -49,24 +51,41 @@ object ApiClient {
 
     private suspend fun <T> call(block: suspend (NotAnimeClient) -> T): T {
         val context = appContext ?: throw IllegalStateException("ApiClient not initialized")
-        return try {
-            block(httpClient())
+        var failure: Exception? = null
+        try {
+            return block(httpClient())
         } catch (e: Exception) {
             if (!isChallenge(e)) throw e
-            UnAnimeLog.w("cloudflare", "challenge detected, opening gate")
-            CloudflareGate.clear()
-            val solved = CloudflareGate.solve(CLEARANCE_URL)
-            if (!solved) throw e
-            syncedUserAgent = WebSettings.getDefaultUserAgent(context)
-            com.notanime.es.net.CronetHttp.configure(defaultUserAgent = syncedUserAgent)
-            try {
-                block(httpClient())
-            } catch (e2: Exception) {
-                if (!isChallenge(e2)) throw e2
-                UnAnimeLog.w("cloudflare", "still blocked, fetching via webview")
-                block(webViewClient(context))
-            }
+            failure = e
         }
+        UnAnimeLog.w("cloudflare", "challenge detected, resyncing user agent")
+        syncUserAgent(context)
+        try {
+            return block(httpClient())
+        } catch (e: Exception) {
+            if (!isChallenge(e)) throw e
+            failure = e
+        }
+        UnAnimeLog.w("cloudflare", "clearance rejected, opening gate")
+        CloudflareGate.clear()
+        if (!CloudflareGate.solve(CLEARANCE_URL)) {
+            throw failure ?: IllegalStateException("challenge not solved")
+        }
+        syncUserAgent(context)
+        try {
+            return block(httpClient())
+        } catch (e: Exception) {
+            if (!isChallenge(e)) throw e
+            UnAnimeLog.w("cloudflare", "still blocked, fetching via webview")
+            return block(webViewClient(context))
+        }
+    }
+
+    private fun syncUserAgent(context: Context) {
+        val agent = WebSettings.getDefaultUserAgent(context)
+        if (agent == syncedUserAgent) return
+        syncedUserAgent = agent
+        com.notanime.es.net.CronetHttp.configure(defaultUserAgent = agent)
     }
 
     suspend fun home() = call { it.home() }
