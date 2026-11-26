@@ -68,7 +68,8 @@ fun UnAnimeApp() {
         )
     val isDrawerLocked = currentRoute != null && (
         currentRoute.startsWith("title?") ||
-            currentRoute.startsWith("episode?")
+            currentRoute.startsWith("episode?") ||
+            currentRoute == TopLevelDestination.SETTINGS.route
         )
     val activeRoute = if (isSubpage) TopLevelDestination.HOME.route else currentRoute
     val playerFullscreen by com.unanimetv.android.core.playback.PlayerFullscreen.active.collectAsState()
