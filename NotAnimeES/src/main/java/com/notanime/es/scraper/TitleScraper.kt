@@ -47,7 +47,8 @@ data class TitleData(
     val episodesCount: Int?,
     val runtime: String?,
     val cast: List<CastMember>,
-    val seasons: List<SeasonEpisodes>
+    val seasons: List<SeasonEpisodes>,
+    val type: String = "tv"
 )
 
 data class Rating(
@@ -144,6 +145,9 @@ object TitleScraper {
             if (slug != null) genres.add(GenreRef(slug, el.text().trim()))
         }
 
+        val type = doc.selectFirst("li.dooplay_player_option")?.attr("data-type")?.takeIf { it.isNotEmpty() }
+            ?: if (doc.body().attr("class").contains("single-movies")) "movie" else "tv"
+
         val cast = mutableListOf<CastMember>()
         for (person in doc.select(".person")) {
             cast.add(
@@ -173,11 +177,12 @@ object TitleScraper {
             episodesCount = fields["episodios"]?.toIntOrNull(),
             runtime = fields["duración media"],
             cast = cast,
-            seasons = parseSeasonBoxes(doc)
+            seasons = parseSeasonBoxes(doc),
+            type = type
         ).also {
             UnAnimeLog.d(
                 "scrape",
-                "title \"${it.title}\" id=${it.id} seasons=${it.seasons.size} cast=${it.cast.size}"
+                "title \"${it.title}\" id=${it.id} type=${it.type} seasons=${it.seasons.size} cast=${it.cast.size}"
             )
         }
     }
