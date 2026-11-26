@@ -191,17 +191,10 @@ fun PlayerVideo(
                     .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(12.dp))
                     .padding(horizontal = Spacing.lg, vertical = Spacing.md)
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_tabler_alert_circle),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(40.dp)
-                )
                 Text(
                     text = "No se pudo reproducir",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Color.White,
-                    modifier = Modifier.padding(top = Spacing.sm)
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
                 )
                 Text(
                     text = playbackError.orEmpty(),
@@ -210,11 +203,14 @@ fun PlayerVideo(
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier.padding(top = Spacing.xs)
                 )
-                androidx.compose.material3.TextButton(onClick = {
-                    playbackError = null
-                    player.prepare()
-                }) {
-                    Text(text = "Reintentar", color = Color.White)
+                androidx.compose.material3.Button(
+                    onClick = {
+                        playbackError = null
+                        player.prepare()
+                    },
+                    modifier = Modifier.padding(top = Spacing.sm)
+                ) {
+                    Text(text = "Reintentar")
                 }
             }
         }
