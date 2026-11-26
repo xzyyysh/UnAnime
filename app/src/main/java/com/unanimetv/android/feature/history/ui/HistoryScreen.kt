@@ -364,20 +364,6 @@ private fun HistoryRow(
                 .clip(MaterialTheme.shapes.small)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
         )
-        if (selecting && selected) {
-            Box(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.primary, CircleShape)
-                    .padding(3.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_tabler_check),
-                    contentDescription = "Seleccionado",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(14.dp)
-                )
-            }
-        }
         Column(modifier = Modifier.weight(1f)) {
             if (entry.type == "episode" && entry.label != null) {
                 Text(
