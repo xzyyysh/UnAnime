@@ -66,6 +66,8 @@ import com.unanimetv.android.core.designsystem.component.EmptyState
 import com.unanimetv.android.core.designsystem.component.LoadingState
 import com.unanimetv.android.core.designsystem.component.StatusBadge
 import com.unanimetv.android.core.designsystem.tokens.Spacing
+import com.unanimetv.android.core.media.ui.ScreenshotGallery
+import com.unanimetv.android.core.media.ui.ScreenshotPreview
 import com.unanimetv.android.core.playback.ui.PlayerVideo
 import com.unanimetv.android.ui.LinkMenu
 
@@ -117,6 +119,7 @@ private fun TitleContent(
     val season = data.seasons.firstOrNull { it.season == selectedSeason } ?: data.seasons.firstOrNull()
     val activeSeason = season?.season ?: 0
     var previewArtwork by remember { mutableStateOf(false) }
+    var galleryPreview by remember { mutableStateOf<Int?>(null) }
     val infoScroll = rememberScrollState()
     val episodesScroll = rememberScrollState()
     val pageScroll = rememberScrollState()
@@ -196,6 +199,15 @@ private fun TitleContent(
                                 posterWidth = 176.dp,
                                 onArtworkClick = { previewArtwork = true }
                             )
+                            playback?.let { pb ->
+                                if (pb.uiState.gallery.isNotEmpty()) {
+                                    ScreenshotGallery(
+                                        screenshots = pb.uiState.gallery,
+                                        onSelect = { galleryPreview = it },
+                                        modifier = Modifier.padding(top = Spacing.lg)
+                                    )
+                                }
+                            }
                         }
                     } else {
                         Column(
@@ -249,6 +261,15 @@ private fun TitleContent(
                         posterWidth = 120.dp,
                         onArtworkClick = { previewArtwork = true }
                     )
+                    playback?.let { pb ->
+                        if (pb.uiState.gallery.isNotEmpty()) {
+                            ScreenshotGallery(
+                                screenshots = pb.uiState.gallery,
+                                onSelect = { galleryPreview = it },
+                                modifier = Modifier.padding(top = Spacing.lg)
+                            )
+                        }
+                    }
                     if (data.seasons.any { it.episodes.isNotEmpty() }) {
                         EpisodesSection(
                             data = data,
@@ -276,6 +297,14 @@ private fun TitleContent(
                         modifier = Modifier.fillMaxSize()
                     )
                 }
+            }
+            galleryPreview?.let { index ->
+                ScreenshotPreview(
+                    screenshots = pb.uiState.gallery,
+                    initialIndex = index,
+                    fileNamePrefix = data.title,
+                    onDismiss = { galleryPreview = null }
+                )
             }
         }
     }
