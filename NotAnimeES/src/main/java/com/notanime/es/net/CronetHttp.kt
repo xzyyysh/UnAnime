@@ -2,6 +2,7 @@ package com.notanime.es.net
 
 import android.content.Context
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
 import org.chromium.net.CronetEngine
 import org.chromium.net.CronetException
 import org.chromium.net.UploadDataProviders
@@ -31,6 +32,7 @@ object CronetHttp {
         "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Mobile Safari/537.36"
 
     private const val BUFFER_SIZE = 128 * 1024
+    private const val REQUEST_TIMEOUT_MS = 15_000L
 
     @Volatile private var defaultUserAgent: String? = null
 
@@ -78,7 +80,8 @@ object CronetHttp {
         val engine = engine ?: throw IllegalStateException("CronetHttp.init not called")
         val method = if (body != null) "POST" else "GET"
         UnAnimeLog.d("net", "$method $url")
-        return suspendCancellableCoroutine { cont ->
+        return withTimeout(REQUEST_TIMEOUT_MS) {
+            suspendCancellableCoroutine<HttpResponse> { cont ->
             val output = ByteArrayOutputStream()
             var readCount = 0
             var readBytes = 0L
@@ -154,6 +157,7 @@ object CronetHttp {
             val request = builder.build()
             cont.invokeOnCancellation { request.cancel() }
             request.start()
+            }
         }
     }
 
