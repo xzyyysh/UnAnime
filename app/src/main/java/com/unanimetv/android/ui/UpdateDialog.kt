@@ -98,16 +98,16 @@ fun UpdateDialog(
                                 .heightIn(max = 320.dp)
                                 .verticalScroll(rememberScrollState())
                         )
-                        Row(
-                            horizontalArrangement = Arrangement.End,
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(Spacing.xs),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = Spacing.md)
                         ) {
-                            TextButton(onClick = onRememberLater) {
+                            TextButton(onClick = onRememberLater, modifier = Modifier.fillMaxWidth()) {
                                 Text("Recuérdalo más tarde")
                             }
-                            Button(onClick = onDownload) {
+                            Button(onClick = onDownload, modifier = Modifier.fillMaxWidth()) {
                                 Text(if (download is UpdateChecker.Download.Failed) "Reintentar" else "Descargar")
                             }
                         }

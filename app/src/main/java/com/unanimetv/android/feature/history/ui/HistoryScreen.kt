@@ -255,16 +255,16 @@ private fun DeleteConfirmDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = Spacing.xs)
                 )
-                Row(
-                    horizontalArrangement = Arrangement.End,
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(Spacing.xs),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = Spacing.md)
                 ) {
-                    TextButton(onClick = onDismiss) {
+                    TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
                         Text(text = "Cancelar")
                     }
-                    TextButton(onClick = onConfirm) {
+                    Button(onClick = onConfirm, modifier = Modifier.fillMaxWidth()) {
                         Text(
                             text = "Eliminar",
                             color = MaterialTheme.colorScheme.error
