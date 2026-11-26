@@ -1,5 +1,7 @@
 import java.util.Properties
 
+import com.android.build.api.variant.FilterConfiguration
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -60,13 +62,25 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a")
+            isUniversalApk = false
+        }
+    }
 }
 
 androidComponents {
     onVariants(selector().withFlavor("env" to "dev").withBuildType("debug")) { variant ->
         variant.applicationId.set("com.unanimetv.android.dev")
         variant.outputs.forEach { output ->
-            output.outputFileName.set("UnAnime-${variant.buildType}-dev.apk")
+            val abi = output.filters.firstOrNull { it.filterType == FilterConfiguration.FilterType.ABI }?.identifier
+            output.outputFileName.set(
+                if (abi != null) "UnAnime-dev-${variant.buildType}-$abi.apk" else "UnAnime-${variant.buildType}-dev.apk"
+            )
         }
     }
 }

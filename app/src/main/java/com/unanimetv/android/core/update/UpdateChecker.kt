@@ -1,5 +1,6 @@
 package com.unanimetv.android.core.update
 
+import android.os.Build
 import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
@@ -50,6 +51,10 @@ object UpdateChecker {
     private const val KEY_NOTIFIED_VERSION = "notified_version"
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    private val deviceAbi = Build.SUPPORTED_ABIS.firstOrNull {
+        it == "arm64-v8a" || it == "armeabi-v7a"
+    } ?: "arm64-v8a"
 
     private val _update = MutableStateFlow<Update?>(null)
     val update: StateFlow<Update?> = _update.asStateFlow()
@@ -141,7 +146,7 @@ object UpdateChecker {
         val appContext = context.applicationContext
         scope.launch {
             val dir = File(appContext.cacheDir, "update").apply { mkdirs() }
-            val apk = File(dir, "UnAnime_${current.version}.apk")
+            val apk = File(dir, "UnAnime_${current.version}_$deviceAbi.apk")
             try {
                 val connection = URL(current.apkUrl).openConnection() as HttpURLConnection
                 connection.connect()
@@ -227,21 +232,37 @@ object UpdateChecker {
         var apkUrl = ""
         var apkSize = 0L
         val assets = json.optJSONArray("assets")
-        assets?.let {
-            for (i in 0 until it.length()) {
-                val asset = it.getJSONObject(i)
-                if (asset.optString("name").endsWith(".apk")) {
-                    apkUrl = asset.optString("browser_download_url")
-                    apkSize = asset.optLong("size")
-                    break
+        val apkAssets = buildList {
+            assets?.let {
+                for (i in 0 until it.length()) {
+                    val asset = it.getJSONObject(i)
+                    val name = asset.optString("name")
+                    if (name.endsWith(".apk", ignoreCase = true)) {
+                        add(ApkAsset(name, asset.optString("browser_download_url"), asset.optLong("size")))
+                    }
                 }
             }
+        }
+        val universal = apkAssets.filter {
+            !it.name.contains("arm64-v8a", true) &&
+                !it.name.contains("armeabi-v7a", true) &&
+                !it.name.contains("armv7", true)
+        }
+        val chosen = apkAssets.firstOrNull { it.name.contains(deviceAbi, true) }
+            ?: universal.firstOrNull()
+            ?: apkAssets.firstOrNull { it.name.contains("armeabi-v7a", true) || it.name.contains("armv7", true) }
+            ?: apkAssets.firstOrNull()
+        if (chosen != null) {
+            apkUrl = chosen.url
+            apkSize = chosen.size
         }
         if (version.isEmpty() || apkUrl.isEmpty()) return null
         return Update(version, changelog, apkUrl, apkSize)
     }
 
-    private fun isNewer(latest: String, current: String): Boolean {
+    private data class ApkAsset(val name: String, val url: String, val size: Long)
+
+private fun isNewer(latest: String, current: String): Boolean {
         val latestParts = latest.split('.').map { it.trim().toIntOrNull() ?: 0 }
         val currentParts = current.split('.').map { it.trim().toIntOrNull() ?: 0 }
         for (i in 0 until maxOf(latestParts.size, currentParts.size)) {

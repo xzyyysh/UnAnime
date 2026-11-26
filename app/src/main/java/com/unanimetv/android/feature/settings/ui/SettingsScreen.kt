@@ -107,8 +107,6 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(Spacing.lg))
         UpdateCard()
         Spacer(modifier = Modifier.height(Spacing.lg))
-        NotificationsCard()
-        Spacer(modifier = Modifier.height(Spacing.lg))
         AboutCard()
         Spacer(modifier = Modifier.height(Spacing.md))
         Text(
@@ -119,90 +117,6 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
         Spacer(modifier = Modifier.height(120.dp))
-    }
-}
-
-@Composable
-private fun NotificationsCard() {
-    val context = LocalContext.current
-    var enabled by remember { mutableStateOf(UpdateNotifier.isEnabled(context)) }
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            UpdateNotifier.setEnabled(context, true)
-            UpdateNotifier.schedule(context)
-            enabled = true
-        }
-    }
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        shape = MaterialTheme.shapes.large,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(modifier = Modifier.padding(Spacing.lg)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
-            ) {
-                Icon(
-                    painterResource(R.drawable.ic_tabler_download),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "Notificaciones",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            Spacer(modifier = Modifier.height(Spacing.md))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Avisos de actualización",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Notifica cuando haya una nueva versión disponible",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(
-                    checked = enabled,
-                    onCheckedChange = { turnOn ->
-                        when {
-                            turnOn -> {
-                                if (Build.VERSION.SDK_INT >= 33 &&
-                                    ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.POST_NOTIFICATIONS
-                                    ) != android.content.pm.PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                } else {
-                                    UpdateNotifier.setEnabled(context, true)
-                                    UpdateNotifier.schedule(context)
-                                    enabled = true
-                                }
-                            }
-                            else -> {
-                                UpdateNotifier.setEnabled(context, false)
-                                UpdateNotifier.schedule(context)
-                                enabled = false
-                            }
-                        }
-                    }
-                )
-            }
-        }
     }
 }
 
@@ -464,6 +378,16 @@ private fun ThemeDropdown(
 private fun UpdateCard() {
     val context = LocalContext.current
     val checking by UpdateChecker.checking.collectAsState()
+    var notifierEnabled by remember { mutableStateOf(UpdateNotifier.isEnabled(context)) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            UpdateNotifier.setEnabled(context, true)
+            UpdateNotifier.schedule(context)
+            notifierEnabled = true
+        }
+    }
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -532,6 +456,50 @@ private fun UpdateCard() {
                         }
                     }
                 }
+            }
+            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.md))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Notificaciones",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Notifica cuando haya una nueva versión disponible",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = notifierEnabled,
+                    onCheckedChange = { turnOn ->
+                        when {
+                            turnOn -> {
+                                if (Build.VERSION.SDK_INT >= 33 &&
+                                    ContextCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.POST_NOTIFICATIONS
+                                    ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    UpdateNotifier.setEnabled(context, true)
+                                    UpdateNotifier.schedule(context)
+                                    notifierEnabled = true
+                                }
+                            }
+                            else -> {
+                                UpdateNotifier.setEnabled(context, false)
+                                UpdateNotifier.schedule(context)
+                                notifierEnabled = false
+                            }
+                        }
+                    }
+                )
             }
         }
     }
