@@ -24,8 +24,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,8 +45,11 @@ import com.unanimetv.android.core.navigation.HISTORY_ROUTE
 import com.unanimetv.android.core.navigation.TopLevelDestination
 import com.unanimetv.android.core.navigation.UnAnimeNavHost
 import com.unanimetv.android.core.navigation.catalogRoute
-import com.unanimetv.android.ui.AppDrawerScaffold
 import com.unanimetv.android.core.update.UpdateChecker
+import com.unanimetv.android.ui.AppDrawerScaffold
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import com.unanimetv.android.ui.GateDialog
 import com.unanimetv.android.ui.UpdateDialog
 
@@ -70,6 +75,21 @@ fun UnAnimeApp() {
     val context = LocalContext.current
     val pendingUpdate by UpdateChecker.update.collectAsState()
     val updateDownload by UpdateChecker.download.collectAsState()
+    val openFromNotification by UpdateChecker.openFromNotification.collectAsState()
+
+    LaunchedEffect(openFromNotification) {
+        if (!openFromNotification) return@LaunchedEffect
+        delay(5_000)
+        if (challengeUrl != null) {
+            withTimeoutOrNull(120_000) {
+                snapshotFlow { challengeUrl }.first { it == null }
+            }
+        }
+        if (UpdateChecker.update.value == null) {
+            UpdateChecker.checkNow(context)
+        }
+        UpdateChecker.consumeNotificationOpen()
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         AppDrawerScaffold(

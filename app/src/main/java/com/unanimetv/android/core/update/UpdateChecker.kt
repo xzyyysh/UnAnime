@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
@@ -40,6 +41,7 @@ object UpdateChecker {
     private const val PREFS = "update_checker"
     private const val KEY_SNOOZED_AT = "snoozed_at"
     private const val KEY_SNOOZED_VERSION = "snoozed_version"
+    private const val KEY_NOTIFIED_VERSION = "notified_version"
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -51,6 +53,9 @@ object UpdateChecker {
 
     private val _checking = MutableStateFlow(false)
     val checking: StateFlow<Boolean> = _checking.asStateFlow()
+
+    private val _openFromNotification = MutableStateFlow(false)
+    val openFromNotification: StateFlow<Boolean> = _openFromNotification.asStateFlow()
 
     private var started = false
 
@@ -87,6 +92,30 @@ object UpdateChecker {
                 _checking.value = false
             }
         }
+    }
+
+    fun markNotificationOpen() {
+        _openFromNotification.value = true
+    }
+
+    fun consumeNotificationOpen() {
+        _openFromNotification.value = false
+    }
+
+    suspend fun pollForNotification(context: Context): Update? = withContext(Dispatchers.IO) {
+        val latest = runCatching { fetchLatest() }
+            .onFailure { UnAnimeLog.w("update", "background check failed: ${it.message}") }
+            .getOrNull() ?: return@withContext null
+        if (!isNewer(latest.version, com.unanimetv.android.core.BuildInfo.version)) return@withContext null
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (prefs.getString(KEY_NOTIFIED_VERSION, null) == latest.version) return@withContext null
+        val snoozedVersion = prefs.getString(KEY_SNOOZED_VERSION, null)
+        val snoozedAt = prefs.getLong(KEY_SNOOZED_AT, 0L)
+        if (snoozedVersion == latest.version && System.currentTimeMillis() - snoozedAt < SNOOZE_MS) {
+            return@withContext null
+        }
+        prefs.edit().putString(KEY_NOTIFIED_VERSION, latest.version).apply()
+        latest
     }
 
     fun rememberLater(context: Context) {

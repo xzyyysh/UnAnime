@@ -14,8 +14,16 @@ import com.notanime.es.NotAnimeConfig
 import com.unanimetv.android.core.BuildInfo
 import com.unanimetv.android.core.designsystem.theme.ThemeController
 import com.unanimetv.android.core.network.ApiClient
+import com.unanimetv.android.core.update.UpdateCheckWorker
 import com.unanimetv.android.core.update.UpdateChecker
+import com.unanimetv.android.core.update.UpdateNotifier
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import java.io.File
+import java.util.concurrent.TimeUnit
 import com.notanime.es.util.UnAnimeLog
 import okhttp3.OkHttpClient
 import okio.Path.Companion.toPath
@@ -31,6 +39,19 @@ class UnAnimeApplication : Application(), SingletonImageLoader.Factory {
         ThemeController.init(this)
         File(cacheDir, "update").deleteRecursively()
         UpdateChecker.start(this)
+        UpdateNotifier.ensureChannel(this)
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "update_check",
+            ExistingPeriodicWorkPolicy.KEEP,
+            PeriodicWorkRequestBuilder<UpdateCheckWorker>(30, TimeUnit.MINUTES)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .setRequiresBatteryNotLow(true)
+                        .build()
+                )
+                .build()
+        )
     }
 
     override fun newImageLoader(context: Context): ImageLoader {
