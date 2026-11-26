@@ -82,6 +82,7 @@ dependencies {
     implementation(libs.media3.database)
     implementation(libs.media3.ui)
     implementation(libs.media3.session)
+    implementation(libs.nextlib.media3ext)
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.androidx.lifecycle.runtime.compose)

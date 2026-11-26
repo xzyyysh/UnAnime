@@ -82,6 +82,13 @@ object WebViewStream {
             webview.settings.mediaPlaybackRequiresUserGesture = false
             webview.setBackgroundColor(0x00000000)
             webview.webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView, url: String) {
+                    view.evaluateJavascript(
+                        "(function(){['.vjs-big-play-button','.captcha_l','.jw-icon-display','[class*=play-button]'].forEach(function(s){var e=document.querySelector(s);if(e)e.click();});})()",
+                        null
+                    )
+                }
+
                 override fun shouldInterceptRequest(
                     view: WebView,
                     request: WebResourceRequest

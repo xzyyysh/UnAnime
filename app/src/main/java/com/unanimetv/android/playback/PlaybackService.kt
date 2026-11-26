@@ -4,7 +4,9 @@ import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -22,7 +24,10 @@ class PlaybackService : MediaSessionService() {
         val notificationProvider = DefaultMediaNotificationProvider.Builder(this).build()
         notificationProvider.setSmallIcon(R.drawable.ic_brand_mark)
         setMediaNotificationProvider(notificationProvider)
-        val player = ExoPlayer.Builder(this)
+        val player = ExoPlayer.Builder(this, NextRenderersFactory(this)
+            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+            .setEnableDecoderFallback(true)
+        )
             .setSeekBackIncrementMs(15_000L)
             .setSeekForwardIncrementMs(15_000L)
             .setMediaSourceFactory(DefaultMediaSourceFactory(CurrentStream.dataSourceFactory(this)))

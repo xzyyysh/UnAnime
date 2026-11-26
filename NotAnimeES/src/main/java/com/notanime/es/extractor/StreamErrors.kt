@@ -14,7 +14,7 @@ object StreamErrors {
         Regex("(geo-?blocked|geo-?restricted|not available in your country)", RegexOption.IGNORE_CASE) to "Bloqueado en tu región",
         Regex("(under maintenance|temporarily unavailable|try again later)", RegexOption.IGNORE_CASE) to "Servidor con problemas",
         Regex("copyright (claim|infringement|takedown)", RegexOption.IGNORE_CASE) to "Video retirado",
-        Regex("(just a moment|checking your browser|challenge-platform|cf-chl|ddos-guard|enable javascript and cookies)", RegexOption.IGNORE_CASE) to "Protección anti-bot"
+        Regex("(just a moment|checking your browser|cf-chl|ddos-guard|enable javascript and cookies)", RegexOption.IGNORE_CASE) to "Protección anti-bot"
     )
 
     fun reasonFrom(html: String): String? =
