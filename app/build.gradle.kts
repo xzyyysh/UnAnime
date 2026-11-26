@@ -63,7 +63,8 @@ android {
 }
 
 androidComponents {
-    onVariants(selector().withFlavor("env" to "dev")) { variant ->
+    onVariants(selector().withFlavor("env" to "dev").withBuildType("debug")) { variant ->
+        variant.applicationId.set("com.unanimetv.android.dev")
         variant.outputs.forEach { output ->
             output.outputFileName.set("UnAnime-${variant.buildType}-dev.apk")
         }
