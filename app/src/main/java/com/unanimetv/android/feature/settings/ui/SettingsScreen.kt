@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CardDefaults
@@ -57,6 +58,7 @@ import com.unanimetv.android.ui.NotAnimeLogo
 import java.io.File
 
 private const val GITHUB_URL = "https://github.com/xzyyysh/UnAnime"
+private const val SOURCE_URL = "https://ww4.animeonline.ninja"
 
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
@@ -161,32 +163,36 @@ private fun AboutCard() {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(50))
-                    .clickable {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB_URL)))
-                    }
-                    .padding(vertical = Spacing.sm, horizontal = Spacing.xs)
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    painterResource(R.drawable.ic_tabler_code),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = "xzyyysh/UnAnime",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Icon(
-                    painterResource(R.drawable.ic_tabler_external_link),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp)
-                )
+                Button(
+                    onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB_URL)))
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_tabler_brand_github),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.xs))
+                    Text(text = "GitHub")
+                }
+                Button(
+                    onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(SOURCE_URL)))
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_tabler_world),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.xs))
+                    Text(text = "AnimeOnlineNinja")
+                }
             }
             Spacer(modifier = Modifier.height(Spacing.sm))
         }
