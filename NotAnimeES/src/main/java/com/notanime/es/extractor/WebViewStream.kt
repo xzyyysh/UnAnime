@@ -54,11 +54,14 @@ object WebViewStream {
         }
     }
 
-    private fun labelOf(url: String): String = when {
+    private fun familyOf(url: String): String? = when {
         url.contains("filemoo", ignoreCase = true) -> "filemoon"
-        url.contains("dood", ignoreCase = true) -> "dood"
-        else -> runCatching { URI(url).host.orEmpty() }.getOrDefault("webview")
+        url.contains("dood", ignoreCase = true) || url.contains("playmogo", ignoreCase = true) -> "dood"
+        else -> null
     }
+
+    private fun labelOf(url: String): String = familyOf(url)
+        ?: runCatching { URI(url).host.orEmpty() }.getOrDefault("webview")
 
     @SuppressLint("SetJavaScriptEnabled")
     private suspend fun awaitStreamUrl(url: String): String = suspendCancellableCoroutine { cont ->
@@ -69,6 +72,8 @@ object WebViewStream {
         }
         val done = AtomicBoolean(false)
         val startedAt = System.currentTimeMillis()
+        val startHost = runCatching { URI(url).host.orEmpty() }.getOrDefault("")
+        val family = familyOf(url)
         fun cleanup(webview: WebView) {
             mainHandler.post {
                 webview.stopLoading()
@@ -82,6 +87,14 @@ object WebViewStream {
             webview.settings.mediaPlaybackRequiresUserGesture = false
             webview.setBackgroundColor(0x00000000)
             webview.webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                    val targetHost = request.url.host.orEmpty()
+                    val allowed = targetHost == startHost ||
+                        familyOf(targetHost) == family ||
+                        targetHost.endsWith("challenges.cloudflare.com")
+                    return !allowed
+                }
+
                 override fun onPageFinished(view: WebView, url: String) {
                     view.evaluateJavascript(
                         "(function(){['.vjs-big-play-button','.captcha_l','.jw-icon-display','[class*=play-button]'].forEach(function(s){var e=document.querySelector(s);if(e)e.click();});})()",
