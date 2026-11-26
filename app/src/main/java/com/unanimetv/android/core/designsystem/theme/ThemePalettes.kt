@@ -291,5 +291,5 @@ internal fun styleScheme(style: ThemeStyle, darkTheme: Boolean): ColorScheme = w
     ThemeStyle.SUNSET -> if (darkTheme) SunsetDark else SunsetLight
     ThemeStyle.MONO -> if (darkTheme) MonoDark else MonoLight
     ThemeStyle.SAKURA -> if (darkTheme) SakuraDark else SakuraLight
-    ThemeStyle.DEFAULT, ThemeStyle.AMOLED -> if (darkTheme) DarkColorScheme else LightColorScheme
+    ThemeStyle.DEFAULT -> if (darkTheme) DarkColorScheme else LightColorScheme
 }

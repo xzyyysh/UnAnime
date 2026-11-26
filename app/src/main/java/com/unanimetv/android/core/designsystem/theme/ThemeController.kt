@@ -9,12 +9,11 @@ import kotlinx.coroutines.flow.update
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
-enum class ThemeStyle { DEFAULT, AMOLED, OCEAN, FOREST, SUNSET, MONO, SAKURA }
+enum class ThemeStyle { DEFAULT, OCEAN, FOREST, SUNSET, MONO, SAKURA }
 
 val ThemeStyle.label: String
     get() = when (this) {
         ThemeStyle.DEFAULT -> "Default"
-        ThemeStyle.AMOLED -> "Amoled"
         ThemeStyle.OCEAN -> "Ocean"
         ThemeStyle.FOREST -> "Forest"
         ThemeStyle.SUNSET -> "Sunset"
@@ -25,6 +24,7 @@ val ThemeStyle.label: String
 data class ThemeSettings(
     val mode: ThemeMode = ThemeMode.SYSTEM,
     val style: ThemeStyle = ThemeStyle.DEFAULT,
+    val amoled: Boolean = false,
     val materialYou: Boolean = false
 )
 
@@ -40,13 +40,15 @@ object ThemeController {
     fun init(context: Context) {
         val store = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs = store
+        val storedStyle = store.getString(KEY_STYLE, null)
         _settings.value = ThemeSettings(
             mode = store.getString(KEY_MODE, null)
                 ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
                 ?: ThemeMode.SYSTEM,
-            style = store.getString(KEY_STYLE, null)
+            style = storedStyle
                 ?.let { runCatching { ThemeStyle.valueOf(it) }.getOrNull() }
                 ?: ThemeStyle.DEFAULT,
+            amoled = storedStyle == "AMOLED" || store.getBoolean(KEY_AMOLED, false),
             materialYou = store.getBoolean(KEY_MATERIAL_YOU, false)
         )
     }
@@ -61,6 +63,11 @@ object ThemeController {
         _settings.update { it.copy(style = style) }
     }
 
+    fun setAmoled(enabled: Boolean) {
+        prefs?.edit()?.putBoolean(KEY_AMOLED, enabled)?.apply()
+        _settings.update { it.copy(amoled = enabled) }
+    }
+
     fun setMaterialYou(enabled: Boolean) {
         prefs?.edit()?.putBoolean(KEY_MATERIAL_YOU, enabled)?.apply()
         _settings.update { it.copy(materialYou = enabled) }
@@ -68,5 +75,6 @@ object ThemeController {
 
     private const val KEY_MODE = "mode"
     private const val KEY_STYLE = "style"
+    private const val KEY_AMOLED = "amoled"
     private const val KEY_MATERIAL_YOU = "material_you"
 }

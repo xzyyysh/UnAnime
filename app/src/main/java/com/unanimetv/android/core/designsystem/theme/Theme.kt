@@ -138,7 +138,7 @@ fun UnAnimeTheme(
         when {
             settings.materialYou && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
                 if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-            settings.style == ThemeStyle.AMOLED && darkTheme -> DarkColorScheme.amoled()
+            darkTheme && settings.amoled -> DarkColorScheme.amoled()
             else -> styleScheme(settings.style, darkTheme)
         }
     }

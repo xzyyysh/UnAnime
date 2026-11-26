@@ -84,7 +84,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             settings = themeSettings,
             onModeChange = ThemeController::setMode,
             onStyleChange = ThemeController::setStyle,
-            onMaterialYouChange = ThemeController::setMaterialYou
+            onMaterialYouChange = ThemeController::setMaterialYou,
+            onAmoledChange = ThemeController::setAmoled
         )
         Spacer(modifier = Modifier.height(Spacing.lg))
         CacheCard(
@@ -206,7 +207,8 @@ private fun AppearanceCard(
     settings: com.unanimetv.android.core.designsystem.theme.ThemeSettings,
     onModeChange: (ThemeMode) -> Unit,
     onStyleChange: (ThemeStyle) -> Unit,
-    onMaterialYouChange: (Boolean) -> Unit
+    onMaterialYouChange: (Boolean) -> Unit,
+    onAmoledChange: (Boolean) -> Unit
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -253,16 +255,28 @@ private fun AppearanceCard(
                     onCheckedChange = onMaterialYouChange
                 )
             }
-            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.md))
-            ThemeDropdown(
-                label = "Estilo de tema",
-                selected = settings.style.label,
-                options = ThemeStyle.entries.map { it.label },
-                onSelect = { option ->
-                    onStyleChange(ThemeStyle.entries.first { it.label == option })
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Amoled",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Negro puro en modo oscuro",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
-            )
-            Spacer(modifier = Modifier.height(Spacing.md))
+                Switch(
+                    checked = settings.amoled,
+                    onCheckedChange = onAmoledChange
+                )
+            }
+            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.md))
             ThemeDropdown(
                 label = "Modo",
                 selected = when (settings.mode) {
@@ -279,6 +293,15 @@ private fun AppearanceCard(
                             else -> ThemeMode.SYSTEM
                         }
                     )
+                }
+            )
+            Spacer(modifier = Modifier.height(Spacing.md))
+            ThemeDropdown(
+                label = "Estilo de tema",
+                selected = settings.style.label,
+                options = ThemeStyle.entries.map { it.label },
+                onSelect = { option ->
+                    onStyleChange(ThemeStyle.entries.first { it.label == option })
                 }
             )
         }
