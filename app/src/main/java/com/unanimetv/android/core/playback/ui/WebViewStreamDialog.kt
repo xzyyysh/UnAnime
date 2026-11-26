@@ -47,7 +47,7 @@ private fun tapAt(webview: WebView, x: Float, y: Float) {
 }
 
 private fun familyOf(host: String): String? = when {
-    host.contains("filemoo", ignoreCase = true) -> "filemoon"
+    host.contains("filemoo", ignoreCase = true) || host.contains("n1mwq", ignoreCase = true) -> "filemoon"
     host.contains("dood", ignoreCase = true) || host.contains("playmogo", ignoreCase = true) -> "dood"
     else -> null
 }
@@ -127,6 +127,7 @@ fun WebViewStreamDialog(
                             settings.domStorageEnabled = true
                             settings.mediaPlaybackRequiresUserGesture = false
                             var loadStartedAt = 0L
+                            var frameRedirected = false
                             webViewClient = object : WebViewClient() {
                                 override fun shouldOverrideUrlLoading(
                                     view: WebView,
@@ -141,7 +142,7 @@ fun WebViewStreamDialog(
 
                                 override fun onPageFinished(view: WebView, finishedUrl: String) {
                                     view.evaluateJavascript(
-                                        "(function(){['.vjs-big-play-button','.captcha_l','.jw-icon-display','[class*=play-button]'].forEach(function(s){var e=document.querySelector(s);if(e)e.click();});})()",
+                                        "(function(){['.captcha-gate__play','.vjs-big-play-button','.captcha_l','.jw-icon-display','[class*=play-button]'].forEach(function(s){var e=document.querySelector(s);if(e)e.click();});})()",
                                         null
                                     )
                                 }
@@ -151,6 +152,16 @@ fun WebViewStreamDialog(
                                     request: WebResourceRequest
                                 ): WebResourceResponse? {
                                     val target = request.url.toString()
+                                    if (!captured && !frameRedirected &&
+                                        request.url.host.orEmpty().contains("n1mwq") &&
+                                        !request.isForMainFrame &&
+                                        request.requestHeaders["Accept"]?.contains("text/html") == true
+                                    ) {
+                                        frameRedirected = true
+                                        loadStartedAt = System.currentTimeMillis()
+                                        view.post { view.loadUrl(target) }
+                                        return null
+                                    }
                                     val isMedia = target.contains(".m3u8") || target.contains(".mp4")
                                     val warmedUp = loadStartedAt == 0L ||
                                         System.currentTimeMillis() - loadStartedAt >= WARMUP_MS
