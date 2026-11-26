@@ -81,7 +81,6 @@ fun WebViewStreamDialog(
     var webviewRef by remember { mutableStateOf<WebView?>(null) }
     val startedAt = remember(url) { System.currentTimeMillis() }
     val startHost = remember(url) { Uri.parse(url).host.orEmpty() }
-    val seamless = remember(url) { familyOf(Uri.parse(url).host.orEmpty()) == "dood" }
 
     LaunchedEffect(url) {
         delay(TIMEOUT_MS)
@@ -123,14 +122,6 @@ fun WebViewStreamDialog(
         properties = DialogProperties(usePlatformDefaultWidth = true)
     ) {
         Column {
-            if (!seamless) {
-                Text(
-                    text = "Resolviendo stream — esperá la verificación",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = Spacing.sm)
-                )
-            }
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -196,22 +187,20 @@ fun WebViewStreamDialog(
                     modifier = Modifier.fillMaxSize(),
                     onRelease = { webviewRef = null }
                 )
-                if (seamless) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.94f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            NotAnimeLoader()
-                            Text(
-                                text = "Resolviendo stream…",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.7f),
-                                modifier = Modifier.padding(top = Spacing.md)
-                            )
-                        }
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.94f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        NotAnimeLoader()
+                        Text(
+                            text = "Resolviendo stream…",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.padding(top = Spacing.md)
+                        )
                     }
                 }
             }
