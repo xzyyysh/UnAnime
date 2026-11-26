@@ -90,6 +90,7 @@ fun WebViewStreamDialog(
 
     LaunchedEffect(url, webviewRef) {
         val webview = webviewRef ?: return@LaunchedEffect
+        val family = familyOf(Uri.parse(url).host.orEmpty())
         while (!captured) {
             delay(2_000)
             if (System.currentTimeMillis() - startedAt > 3_000 && webview.width > 0) {
@@ -107,12 +108,19 @@ fun WebViewStreamDialog(
                 }
             }
             webview.evaluateJavascript(
-                "(function(){var v=document.querySelector('video');if(!v)return '';return v.src||v.currentSrc||'';})()"
+                "(function(){var v=document.querySelector('video');if(!v)return 'novideo';return (v.src||v.currentSrc||'')+'|'+(v.duration||0);})()"
             ) { value ->
-                val src = value?.trim()?.removeSurrounding("\"")
-                if (!captured && !src.isNullOrEmpty() && src.startsWith("http") && !src.contains("blob:")) {
+                val raw = value?.trim()?.removeSurrounding("\"") ?: return@evaluateJavascript
+                val parts = raw.split("|")
+                val src = parts.getOrNull(0).orEmpty()
+                val duration = parts.getOrNull(1)?.toFloatOrNull() ?: 0f
+                val elapsed = System.currentTimeMillis() - startedAt
+                if (!captured && src.startsWith("http") && !src.contains("blob:")) {
                     captured = true
                     onStream(src, null)
+                } else if (!captured && family == "filemoon" && src.isEmpty() && duration <= 0f && elapsed > 15_000) {
+                    captured = true
+                    onTimeout()
                 }
             }
         }
@@ -168,7 +176,8 @@ fun WebViewStreamDialog(
                                     ) {
                                         return injectedGateResponse(target)
                                     }
-                                    val isMedia = target.contains(".m3u8") || target.contains(".mp4")
+                                    val isMedia = !request.isForMainFrame &&
+                                        (target.contains(".m3u8") || target.contains(".mp4"))
                                     val warmedUp = loadStartedAt == 0L ||
                                         System.currentTimeMillis() - loadStartedAt >= WARMUP_MS
                                     if (!captured && isMedia && warmedUp) {
