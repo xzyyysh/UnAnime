@@ -43,11 +43,28 @@ fun WebViewStreamDialog(
     onDismiss: () -> Unit
 ) {
     var captured by remember { mutableStateOf(false) }
+    var webviewRef by remember { mutableStateOf<WebView?>(null) }
     val startHost = remember(url) { Uri.parse(url).host.orEmpty() }
 
     LaunchedEffect(url) {
         delay(TIMEOUT_MS)
         onDismiss()
+    }
+
+    LaunchedEffect(url, webviewRef) {
+        val webview = webviewRef ?: return@LaunchedEffect
+        while (!captured) {
+            delay(1_000)
+            webview.evaluateJavascript(
+                "(function(){var v=document.querySelector('video');if(!v)return '';return v.src||v.currentSrc||'';})()"
+            ) { value ->
+                val src = value?.trim()?.removeSurrounding("\"")
+                if (!captured && !src.isNullOrEmpty() && src.startsWith("http") && !src.contains("blob:")) {
+                    captured = true
+                    onStream(src)
+                }
+            }
+        }
     }
 
     Dialog(
@@ -64,6 +81,7 @@ fun WebViewStreamDialog(
             androidx.compose.ui.viewinterop.AndroidView(
                 factory = { context ->
                     WebView(context).apply {
+                        webviewRef = this
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
                         settings.mediaPlaybackRequiresUserGesture = false
@@ -109,7 +127,8 @@ fun WebViewStreamDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)
-                    .clip(MaterialTheme.shapes.medium)
+                    .clip(MaterialTheme.shapes.medium),
+                onRelease = { webviewRef = null }
             )
             TextButton(
                 onClick = onDismiss,
