@@ -1,5 +1,6 @@
 package com.notanime.es.scraper
 
+import com.notanime.es.extractor.StreamErrors
 import com.notanime.es.extractor.StreamInfo
 import com.notanime.es.extractor.StreamResolvers
 import com.notanime.es.net.Fetcher
@@ -121,8 +122,10 @@ object SourcesResolver {
             icon = server.icon
         )
         if (!resolvable) {
-            UnAnimeLog.d("sources", "${server.name} skipped ($host): ${skipReason ?: "no resolver"}")
-            return base
+            val probed = StreamErrors.probe(server.url)
+            val reason = probed ?: skipReason
+            UnAnimeLog.d("sources", "${server.name} skipped ($host): ${reason ?: "no resolver"}")
+            return base.copy(skipReason = reason)
         }
         val priorError = host?.let { hostErrors[it] }
         if (priorError != null) {
@@ -141,7 +144,8 @@ object SourcesResolver {
                     UnAnimeLog.d("sources", "${server.name} ($host) ok on retry: ${it.stream?.qualities?.size ?: 0} qualities")
                 }
             } catch (e: Exception) {
-                val message = e.message ?: e.toString()
+                val probed = StreamErrors.probe(server.url)
+                val message = probed ?: e.message ?: e.toString()
                 host?.let { hostErrors[it] = message }
                 UnAnimeLog.e("sources", "${server.name} ($host) failed: $message", e)
                 base.copy(error = message)

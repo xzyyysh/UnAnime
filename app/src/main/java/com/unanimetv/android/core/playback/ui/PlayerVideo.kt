@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.Player
+import androidx.media3.common.PlaybackException
 import androidx.media3.ui.PlayerView
 import androidx.compose.ui.res.painterResource
 import com.unanimetv.android.R
@@ -71,6 +72,7 @@ fun PlayerVideo(
     var playing by remember { mutableStateOf(false) }
     var ended by remember { mutableStateOf(false) }
     var buffering by remember { mutableStateOf(false) }
+    var playbackError by remember { mutableStateOf<String?>(null) }
     var durationMs by remember { mutableLongStateOf(0L) }
     var positionMs by remember { mutableLongStateOf(0L) }
     var bufferedMs by remember { mutableLongStateOf(0L) }
@@ -95,6 +97,22 @@ fun PlayerVideo(
                 UnAnimeLog.d("player", "ui state=$name")
                 buffering = state == Player.STATE_BUFFERING
                 ended = state == Player.STATE_ENDED
+                if (state == Player.STATE_READY || state == Player.STATE_BUFFERING) playbackError = null
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                playbackError = when (error.errorCode) {
+                    PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+                    PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT -> "Error de conexión"
+                    PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND,
+                    PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS,
+                    PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> "Video no disponible"
+                    PlaybackException.ERROR_CODE_DECODING_FAILED,
+                    PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES,
+                    PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED -> "Formato no soportado"
+                    else -> "Error de reproducción"
+                }
+                UnAnimeLog.e("player", "ui playback error ${error.errorCodeName}", error)
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -162,8 +180,43 @@ fun PlayerVideo(
                     if (!controlsVisible) settingsOpen = false
                 }
         )
-        if (buffering && !ended) {
+        if (buffering && !ended && playbackError == null) {
             NotAnimeLoader(compact = true, modifier = Modifier.fillMaxSize())
+        }
+        if (playbackError != null && !ended) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(12.dp))
+                    .padding(horizontal = Spacing.lg, vertical = Spacing.md)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_tabler_alert_circle),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(40.dp)
+                )
+                Text(
+                    text = "No se pudo reproducir",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Color.White,
+                    modifier = Modifier.padding(top = Spacing.sm)
+                )
+                Text(
+                    text = playbackError.orEmpty(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.7f),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.padding(top = Spacing.xs)
+                )
+                androidx.compose.material3.TextButton(onClick = {
+                    playbackError = null
+                    player.prepare()
+                }) {
+                    Text(text = "Reintentar", color = Color.White)
+                }
+            }
         }
         AnimatedVisibility(
             visible = controlsVisible,

@@ -35,7 +35,7 @@ class EpisodeViewModel(
     }
 
     fun selectServer(server: SourceServer) {
-        if (server.stream != null || server.error != null || !server.resolvable) {
+        if (server.stream != null || server.error != null || (server.skipReason != null && !server.resolvable)) {
             _uiState.update { it.copy(selectedServer = server, resolvingUrl = null) }
             return
         }
