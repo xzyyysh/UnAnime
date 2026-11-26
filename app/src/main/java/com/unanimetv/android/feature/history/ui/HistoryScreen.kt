@@ -72,6 +72,10 @@ fun HistoryScreen(
     val selected = remember { mutableListOf<String>().toMutableStateList() }
     var confirmDelete by remember { mutableStateOf(false) }
     val wide = LocalConfiguration.current.screenWidthDp >= 600
+    val watched = entries
+        .filter { (progress[it.url]?.durationMs ?: 0L) > 0L }
+        .sortedByDescending { progress[it.url]?.updatedAt ?: 0L }
+    val activeItems = if (tab == 0) entries else watched
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -105,7 +109,7 @@ fun HistoryScreen(
                     }) {
                         Text(text = "Cancelar")
                     }
-                } else {
+                } else if (activeItems.isNotEmpty()) {
                     TextButton(onClick = { selecting = true }) {
                         Text(text = "Seleccionar")
                     }
@@ -118,16 +122,13 @@ fun HistoryScreen(
                 ) {
                     HistoryTab(
                         label = "Todos",
-                        count = 0,
+                        count = selected.size,
                         selected = false,
                         onClick = {
-                            val visible = if (tab == 0) entries else entries.filter {
-                                (progress[it.url]?.durationMs ?: 0L) > 0L
-                            }
-                            if (selected.size == visible.size) selected.clear()
+                            if (selected.size == activeItems.size) selected.clear()
                             else {
                                 selected.clear()
-                                selected.addAll(visible.map { it.url })
+                                selected.addAll(activeItems.map { it.url })
                             }
                         }
                     )
@@ -187,9 +188,6 @@ fun HistoryScreen(
                     }
                 }
             } else {
-                val watched = entries
-                    .filter { progress[it.url]?.durationMs ?: 0L > 0L }
-                    .sortedByDescending { progress[it.url]?.updatedAt ?: 0L }
                 if (watched.isEmpty()) {
                     EmptyState(message = "Sin progreso aún. Reproducí un episodio para verlo acá.")
                 } else {
@@ -333,7 +331,7 @@ private fun HistoryTab(
             style = MaterialTheme.typography.labelLarge,
             color = content
         )
-        if (count > 0) {
+        if (count >= 0) {
             Spacer(modifier = Modifier.width(Spacing.xs))
             Text(
                 text = count.toString(),
