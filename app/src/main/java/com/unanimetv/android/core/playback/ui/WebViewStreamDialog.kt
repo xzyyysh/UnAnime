@@ -36,10 +36,8 @@ import kotlinx.coroutines.delay
 private const val WARMUP_MS = 2_500L
 private const val TIMEOUT_MS = 60_000L
 
-private fun tapCenter(webview: WebView) {
+private fun tapAt(webview: WebView, x: Float, y: Float) {
     val now = android.os.SystemClock.uptimeMillis()
-    val x = webview.width / 2f
-    val y = webview.height / 2f
     val down = android.view.MotionEvent.obtain(now, now, android.view.MotionEvent.ACTION_DOWN, x, y, 0)
     webview.dispatchTouchEvent(down)
     down.recycle()
@@ -74,12 +72,21 @@ fun WebViewStreamDialog(
 
     LaunchedEffect(url, webviewRef) {
         val webview = webviewRef ?: return@LaunchedEffect
-        var tapped = false
         while (!captured) {
-            delay(1_000)
-            if (!tapped && System.currentTimeMillis() - startedAt > 4_000 && webview.width > 0) {
-                tapped = true
-                tapCenter(webview)
+            delay(2_000)
+            if (System.currentTimeMillis() - startedAt > 3_000 && webview.width > 0) {
+                webview.evaluateJavascript(
+                    "(function(){var f=document.querySelector('iframe');if(!f)return '';var r=f.getBoundingClientRect();return [r.left,r.top,r.width,r.height].join(',');})()"
+                ) { value ->
+                    val parts = value?.trim()?.removeSurrounding("\"")
+                        ?.split(",")?.mapNotNull { it.toFloatOrNull() }
+                    if (!captured && parts != null && parts.size == 4) {
+                        val density = webview.resources.displayMetrics.density
+                        val x = (parts[0] + parts[2] / 2f) * density
+                        val y = (parts[1] + parts[3] / 2f) * density
+                        tapAt(webview, x, y)
+                    }
+                }
             }
             webview.evaluateJavascript(
                 "(function(){var v=document.querySelector('video');if(!v)return '';return v.src||v.currentSrc||'';})()"
