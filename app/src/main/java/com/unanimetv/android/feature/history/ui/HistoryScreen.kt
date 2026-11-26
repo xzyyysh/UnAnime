@@ -115,25 +115,6 @@ fun HistoryScreen(
                     }
                 }
             }
-            if (selecting) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                    modifier = Modifier.padding(horizontal = Spacing.lg)
-                ) {
-                    HistoryTab(
-                        label = "Todos",
-                        count = selected.size,
-                        selected = false,
-                        onClick = {
-                            if (selected.size == activeItems.size) selected.clear()
-                            else {
-                                selected.clear()
-                                selected.addAll(activeItems.map { it.url })
-                            }
-                        }
-                    )
-                }
-            }
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 modifier = Modifier.padding(horizontal = Spacing.lg)
