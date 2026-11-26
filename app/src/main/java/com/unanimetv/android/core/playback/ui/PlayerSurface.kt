@@ -80,10 +80,19 @@ fun PlayerSurface(
                 compact = true,
                 modifier = Modifier.fillMaxSize()
             )
-            unavailable -> UnavailableServer(
-                message = selectedServer?.error ?: selectedServer?.skipReason.orEmpty(),
-                hint = unavailableHint
-            )
+            unavailable -> Box(modifier = Modifier.fillMaxSize()) {
+                BackdropBanner(
+                    backdropUrl = backdropUrl,
+                    canPlay = false,
+                    resolving = resolvingUrl != null,
+                    onPlay = onPlay
+                )
+                UnavailableServer(
+                    message = selectedServer?.error ?: selectedServer?.skipReason.orEmpty(),
+                    hint = unavailableHint,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
             player != null && stream != null && !fullscreenActive -> PlayerVideo(
                 player = player,
                 title = title,
@@ -155,20 +164,13 @@ private fun UnavailableServer(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.padding(Spacing.lg)
+        modifier = modifier.padding(horizontal = Spacing.lg)
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_tabler_alert_circle),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.error,
-            modifier = Modifier.size(48.dp)
-        )
         Text(
             text = message,
             style = MaterialTheme.typography.titleSmall,
             color = Color.White,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = Spacing.sm)
+            textAlign = TextAlign.Center
         )
         if (hint != null) {
             Text(
