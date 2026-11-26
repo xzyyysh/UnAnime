@@ -31,7 +31,7 @@ class MoviePlayback(
     val onSelectLanguage: (String) -> Unit,
     val onSelectServer: (SourceServer) -> Unit,
     val onReload: () -> Unit,
-    val onWebviewStream: (String, String) -> Unit,
+    val onWebviewStream: (String, String, String?) -> Unit,
     val onDismissWebview: () -> Unit
 ) {
     var uiState by mutableStateOf(EpisodeUiState(url = url))

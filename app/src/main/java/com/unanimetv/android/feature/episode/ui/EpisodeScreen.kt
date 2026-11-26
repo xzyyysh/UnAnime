@@ -92,7 +92,7 @@ fun EpisodeScreen(
     uiState.webviewUrl?.let { webviewUrl ->
         WebViewStreamDialog(
             url = webviewUrl,
-            onStream = { mediaUrl -> viewModel.onWebviewStream(webviewUrl, mediaUrl) },
+            onStream = { mediaUrl, referer -> viewModel.onWebviewStream(webviewUrl, mediaUrl, referer) },
             onDismiss = viewModel::dismissWebview
         )
     }

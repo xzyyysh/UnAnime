@@ -36,6 +36,18 @@ import kotlinx.coroutines.delay
 private const val WARMUP_MS = 2_500L
 private const val TIMEOUT_MS = 60_000L
 
+private fun tapCenter(webview: WebView) {
+    val now = android.os.SystemClock.uptimeMillis()
+    val x = webview.width / 2f
+    val y = webview.height / 2f
+    val down = android.view.MotionEvent.obtain(now, now, android.view.MotionEvent.ACTION_DOWN, x, y, 0)
+    webview.dispatchTouchEvent(down)
+    down.recycle()
+    val up = android.view.MotionEvent.obtain(now, now + 80, android.view.MotionEvent.ACTION_UP, x, y, 0)
+    webview.dispatchTouchEvent(up)
+    up.recycle()
+}
+
 private fun familyOf(host: String): String? = when {
     host.contains("filemoo", ignoreCase = true) -> "filemoon"
     host.contains("dood", ignoreCase = true) || host.contains("playmogo", ignoreCase = true) -> "dood"
@@ -46,11 +58,12 @@ private fun familyOf(host: String): String? = when {
 @Composable
 fun WebViewStreamDialog(
     url: String,
-    onStream: (String) -> Unit,
+    onStream: (String, String?) -> Unit,
     onDismiss: () -> Unit
 ) {
     var captured by remember { mutableStateOf(false) }
     var webviewRef by remember { mutableStateOf<WebView?>(null) }
+    val startedAt = remember(url) { System.currentTimeMillis() }
     val startHost = remember(url) { Uri.parse(url).host.orEmpty() }
     val seamless = remember(url) { familyOf(Uri.parse(url).host.orEmpty()) == "dood" }
 
@@ -61,15 +74,20 @@ fun WebViewStreamDialog(
 
     LaunchedEffect(url, webviewRef) {
         val webview = webviewRef ?: return@LaunchedEffect
+        var tapped = false
         while (!captured) {
             delay(1_000)
+            if (!tapped && System.currentTimeMillis() - startedAt > 4_000 && webview.width > 0) {
+                tapped = true
+                tapCenter(webview)
+            }
             webview.evaluateJavascript(
                 "(function(){var v=document.querySelector('video');if(!v)return '';return v.src||v.currentSrc||'';})()"
             ) { value ->
                 val src = value?.trim()?.removeSurrounding("\"")
                 if (!captured && !src.isNullOrEmpty() && src.startsWith("http") && !src.contains("blob:")) {
                     captured = true
-                    onStream(src)
+                    onStream(src, null)
                 }
             }
         }
@@ -131,7 +149,10 @@ fun WebViewStreamDialog(
                                         System.currentTimeMillis() - loadStartedAt >= WARMUP_MS
                                     if (!captured && isMedia && warmedUp) {
                                         captured = true
-                                        onStream(target)
+                                        val referer = request.requestHeaders.entries
+                                            .firstOrNull { it.key.equals("referer", ignoreCase = true) }
+                                            ?.value
+                                        onStream(target, referer)
                                     }
                                     return null
                                 }

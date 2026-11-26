@@ -111,8 +111,8 @@ object ApiClient {
     suspend fun resolveServer(server: com.notanime.es.scraper.EmbedServer) =
         call { it.resolveServer(server) }
 
-    suspend fun resolveWebviewStream(url: String, mediaUrl: String): com.notanime.es.extractor.StreamInfo =
-        com.notanime.es.extractor.WebViewStream.buildInfo(url, mediaUrl)
+    suspend fun resolveWebviewStream(url: String, mediaUrl: String, referer: String?): com.notanime.es.extractor.StreamInfo =
+        com.notanime.es.extractor.WebViewStream.buildInfo(url, mediaUrl, referer)
 
     suspend fun resolve(url: String) = call { it.resolve(url) }
 }

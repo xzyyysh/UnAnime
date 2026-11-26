@@ -18,8 +18,8 @@ object WebViewStream {
         return resolver(url)
     }
 
-    suspend fun buildInfo(url: String, mediaUrl: String): StreamInfo {
-        val referer = runCatching {
+    suspend fun buildInfo(url: String, mediaUrl: String, referer: String? = null): StreamInfo {
+        val effectiveReferer = referer ?: runCatching {
             val uri = URI(url)
             "${uri.scheme}://${uri.host}/"
         }.getOrDefault("")
@@ -27,15 +27,15 @@ object WebViewStream {
             StreamInfo(
                 host = labelOf(url),
                 videoId = null,
-                qualities = Hls.masterWithVariants(mediaUrl, referer),
-                referer = referer
+                qualities = Hls.masterWithVariants(mediaUrl, effectiveReferer),
+                referer = effectiveReferer
             )
         } else {
             StreamInfo(
                 host = labelOf(url),
                 videoId = null,
                 qualities = listOf(StreamQuality("original", mediaUrl)),
-                referer = referer
+                referer = effectiveReferer
             )
         }
     }

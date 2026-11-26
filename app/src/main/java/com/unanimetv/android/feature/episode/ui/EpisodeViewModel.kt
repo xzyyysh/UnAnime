@@ -71,13 +71,13 @@ class EpisodeViewModel(
         }
     }
 
-    fun onWebviewStream(url: String, mediaUrl: String) {
+    fun onWebviewStream(url: String, mediaUrl: String, referer: String?) {
         val server = webviewServer ?: return
         _uiState.update { it.copy(webviewUrl = null, resolvingUrl = url) }
         resolveJob?.cancel()
         resolveJob = viewModelScope.launch {
             try {
-                val info = ApiClient.resolveWebviewStream(url, mediaUrl)
+                val info = ApiClient.resolveWebviewStream(url, mediaUrl, referer)
                 val resolved = server.copy(stream = info, error = null, skipReason = null, resolvable = true)
                 _uiState.update { state ->
                     state.copy(

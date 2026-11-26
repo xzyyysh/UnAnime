@@ -312,7 +312,7 @@ private fun TitleContent(
             pb.uiState.webviewUrl?.let { webviewUrl ->
                 WebViewStreamDialog(
                     url = webviewUrl,
-                    onStream = { mediaUrl -> pb.onWebviewStream(webviewUrl, mediaUrl) },
+                    onStream = { mediaUrl, referer -> pb.onWebviewStream(webviewUrl, mediaUrl, referer) },
                     onDismiss = pb.onDismissWebview
                 )
             }
