@@ -80,11 +80,9 @@ fun PlayerSurface(
                 compact = true,
                 modifier = Modifier.fillMaxSize()
             )
-            !started -> BackdropBanner(
-                backdropUrl = backdropUrl,
-                canPlay = stream != null,
-                resolving = resolvingUrl != null,
-                onPlay = onPlay
+            unavailable -> UnavailableServer(
+                message = selectedServer?.error ?: selectedServer?.skipReason.orEmpty(),
+                hint = unavailableHint
             )
             player != null && stream != null && !fullscreenActive -> PlayerVideo(
                 player = player,
@@ -94,9 +92,11 @@ fun PlayerSurface(
                 modifier = Modifier.fillMaxSize()
             )
             fullscreenActive -> Box(modifier = Modifier.fillMaxSize().background(Color.Black))
-            unavailable -> UnavailableServer(
-                message = selectedServer?.error ?: selectedServer?.skipReason.orEmpty(),
-                hint = unavailableHint
+            !started -> BackdropBanner(
+                backdropUrl = backdropUrl,
+                canPlay = stream != null,
+                resolving = resolvingUrl != null,
+                onPlay = onPlay
             )
             player == null -> NotAnimeLoader(
                 compact = true,
