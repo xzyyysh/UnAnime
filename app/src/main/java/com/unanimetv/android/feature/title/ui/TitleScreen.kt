@@ -150,6 +150,8 @@ private fun TitleContent(
                 LinkMenu(
                     url = data.url,
                     isFavorite = isFavorite,
+                    onReload = playback?.let { it::reload },
+                    reloadLabel = "Recargar película",
                     onToggleFavorite = {
                         if (isFavorite) {
                             FavoritesStore.remove(data.url)

@@ -27,7 +27,8 @@ fun LinkMenu(
     modifier: Modifier = Modifier,
     isFavorite: Boolean? = null,
     onToggleFavorite: (() -> Unit)? = null,
-    onReload: (() -> Unit)? = null
+    onReload: (() -> Unit)? = null,
+    reloadLabel: String = "Recargar episodio"
 ) {
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -47,7 +48,7 @@ fun LinkMenu(
         ) {
             if (onReload != null) {
                 DropdownMenuItem(
-                    text = { Text("Recargar episodio") },
+                    text = { Text(reloadLabel) },
                     onClick = {
                         expanded = false
                         onReload()

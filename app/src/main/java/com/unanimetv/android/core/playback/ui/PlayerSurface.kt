@@ -61,9 +61,12 @@ fun PlayerSurface(
     onSelectServer: (SourceServer) -> Unit,
     onPlay: () -> Unit,
     onToggleFullscreen: () -> Unit,
+    unavailableHint: String? = null,
     modifier: Modifier = Modifier
 ) {
-    val picking = !started && (selectedServer == null || selectedServer.error != null)
+    val unavailable = selectedServer != null && stream == null &&
+        (selectedServer.error != null || selectedServer.skipReason != null)
+    val picking = !started && !unavailable && (selectedServer == null || selectedServer.error != null)
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -91,6 +94,10 @@ fun PlayerSurface(
                 modifier = Modifier.fillMaxSize()
             )
             fullscreenActive -> Box(modifier = Modifier.fillMaxSize().background(Color.Black))
+            unavailable -> UnavailableServer(
+                message = selectedServer?.error ?: selectedServer?.skipReason.orEmpty(),
+                hint = unavailableHint
+            )
             player == null -> NotAnimeLoader(
                 compact = true,
                 modifier = Modifier.fillMaxSize()
@@ -135,6 +142,41 @@ fun PlayerSurface(
                 onSelectLanguage = onSelectLanguage,
                 onSelectServer = onSelectServer,
                 modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+
+@Composable
+private fun UnavailableServer(
+    message: String,
+    hint: String?,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.padding(Spacing.lg)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_tabler_alert_circle),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error,
+            modifier = Modifier.size(48.dp)
+        )
+        Text(
+            text = message,
+            style = MaterialTheme.typography.titleSmall,
+            color = Color.White,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = Spacing.sm)
+        )
+        if (hint != null) {
+            Text(
+                text = hint,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = Spacing.xs)
             )
         }
     }

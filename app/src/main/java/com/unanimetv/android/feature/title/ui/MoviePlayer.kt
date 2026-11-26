@@ -29,13 +29,19 @@ import com.unanimetv.android.feature.episode.ui.EpisodeViewModel
 class MoviePlayback(
     val url: String,
     val onSelectLanguage: (String) -> Unit,
-    val onSelectServer: (SourceServer) -> Unit
+    val onSelectServer: (SourceServer) -> Unit,
+    val onReload: () -> Unit
 ) {
     var uiState by mutableStateOf(EpisodeUiState(url = url))
     var controller by mutableStateOf<MediaController?>(null)
     var started by mutableStateOf(false)
     var fullscreen by mutableStateOf(false)
     val stream: StreamInfo? get() = uiState.selectedServer?.stream
+
+    fun reload() {
+        started = false
+        onReload()
+    }
 }
 
 @Composable
@@ -45,7 +51,9 @@ fun rememberMoviePlayback(
     posterUrl: String?
 ): MoviePlayback {
     val viewModel: EpisodeViewModel = viewModel(key = "movie-$url") { EpisodeViewModel(url) }
-    val playback = remember { MoviePlayback(url, viewModel::selectLanguage, viewModel::selectServer) }
+    val playback = remember {
+        MoviePlayback(url, viewModel::selectLanguage, viewModel::selectServer, viewModel::reload)
+    }
     val uiState by viewModel.uiState.collectAsState()
     playback.uiState = uiState
     playback.controller = rememberMediaController(url) { if (it) playback.started = true }
@@ -115,6 +123,7 @@ fun MoviePlayerSurface(
             playback.started = true
         },
         onToggleFullscreen = { playback.fullscreen = !playback.fullscreen },
+        unavailableHint = "Reload the movie to choose another source maybe.",
         modifier = modifier
     )
 }
