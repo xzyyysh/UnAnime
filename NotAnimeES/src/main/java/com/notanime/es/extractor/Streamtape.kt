@@ -14,12 +14,12 @@ object Streamtape {
     )
 
     private val assignmentRegex = Regex(
-        "getElementById\\('(?:ideoolink|botlink|robotlink)'\\)\\.innerHTML\\s*=\\s*(['\"])([^'\"]*)\\1\\s*\\+\\s*(?:''\\s*\\+\\s*)?\\(?\\s*(['\"])([^'\"]*)\\3\\s*\\)?((?:\\.substring\\(\\d+\\))*)"
+        "getElementById\\('[^']*'\\)\\.innerHTML\\s*=\\s*(['\"])([^'\"]*)\\1\\s*\\+\\s*(?:''\\s*\\+\\s*)?\\(?\\s*(['\"])([^'\"]*)\\3\\s*\\)?((?:\\.substring\\(\\d+\\))*)"
     )
     private val substringRegex = Regex("\\.substring\\((\\d+)\\)")
     private val urlPrefixRegex = Regex("^/{1,2}streamtape\\.com/get_video\\?")
     private val tokenRegex = Regex("token=([A-Za-z0-9]+)")
-    private val videoIdRegex = Regex("/e/([^/?#]+)")
+    private val videoIdRegex = Regex("/(?:e|v)/([^/?#]+)")
 
     private fun parseAssignments(html: String): List<LinkPart> {
         return assignmentRegex.findAll(html).map { match ->
