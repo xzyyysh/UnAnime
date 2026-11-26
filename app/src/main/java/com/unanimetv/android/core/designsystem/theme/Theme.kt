@@ -26,7 +26,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.core.view.WindowCompat
 import kotlinx.coroutines.launch
 
-private val LightColorScheme = lightColorScheme(
+internal val LightColorScheme = lightColorScheme(
     primary = EspressoPrimaryLight,
     onPrimary = EspressoOnPrimaryLight,
     primaryContainer = EspressoPrimaryContainerLight,
@@ -54,7 +54,7 @@ private val LightColorScheme = lightColorScheme(
     outlineVariant = EspressoOutlineVariantLight
 )
 
-private val DarkColorScheme = darkColorScheme(
+internal val DarkColorScheme = darkColorScheme(
     primary = EspressoPrimaryDark,
     onPrimary = EspressoOnPrimaryDark,
     primaryContainer = EspressoPrimaryContainerDark,
@@ -138,9 +138,8 @@ fun UnAnimeTheme(
         when {
             settings.materialYou && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
                 if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-            darkTheme && settings.style == ThemeStyle.AMOLED -> DarkColorScheme.amoled()
-            darkTheme -> DarkColorScheme
-            else -> LightColorScheme
+            settings.style == ThemeStyle.AMOLED && darkTheme -> DarkColorScheme.amoled()
+            else -> styleScheme(settings.style, darkTheme)
         }
     }
     var current by remember { mutableStateOf(target) }

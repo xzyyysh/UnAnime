@@ -9,7 +9,18 @@ import kotlinx.coroutines.flow.update
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
-enum class ThemeStyle { DEFAULT, AMOLED }
+enum class ThemeStyle { DEFAULT, AMOLED, OCEAN, FOREST, SUNSET, MONO, SAKURA }
+
+val ThemeStyle.label: String
+    get() = when (this) {
+        ThemeStyle.DEFAULT -> "Default"
+        ThemeStyle.AMOLED -> "Amoled"
+        ThemeStyle.OCEAN -> "Ocean"
+        ThemeStyle.FOREST -> "Forest"
+        ThemeStyle.SUNSET -> "Sunset"
+        ThemeStyle.MONO -> "Mono"
+        ThemeStyle.SAKURA -> "Sakura"
+    }
 
 data class ThemeSettings(
     val mode: ThemeMode = ThemeMode.SYSTEM,

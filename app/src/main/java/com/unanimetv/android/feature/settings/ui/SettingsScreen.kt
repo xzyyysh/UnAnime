@@ -53,6 +53,7 @@ import com.unanimetv.android.core.playback.CurrentStream
 import com.unanimetv.android.core.update.UpdateChecker
 import com.unanimetv.android.core.designsystem.theme.ThemeMode
 import com.unanimetv.android.core.designsystem.theme.ThemeStyle
+import com.unanimetv.android.core.designsystem.theme.label
 import com.unanimetv.android.core.designsystem.tokens.Spacing
 import com.unanimetv.android.ui.NotAnimeLogo
 import java.io.File
@@ -255,15 +256,10 @@ private fun AppearanceCard(
             HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.md))
             ThemeDropdown(
                 label = "Estilo de tema",
-                selected = when (settings.style) {
-                    ThemeStyle.DEFAULT -> "Default"
-                    ThemeStyle.AMOLED -> "Amoled"
-                },
-                options = listOf("Default", "Amoled"),
+                selected = settings.style.label,
+                options = ThemeStyle.entries.map { it.label },
                 onSelect = { option ->
-                    onStyleChange(
-                        if (option == "Amoled") ThemeStyle.AMOLED else ThemeStyle.DEFAULT
-                    )
+                    onStyleChange(ThemeStyle.entries.first { it.label == option })
                 }
             )
             Spacer(modifier = Modifier.height(Spacing.md))
