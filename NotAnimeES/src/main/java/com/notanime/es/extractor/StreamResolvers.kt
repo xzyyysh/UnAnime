@@ -18,19 +18,20 @@ object StreamResolvers {
     )
 
     private val resolverPatterns: List<Pair<Regex, suspend (String) -> StreamInfo>> = listOf(
-        Regex("uqload", RegexOption.IGNORE_CASE) to { url -> Uqload.resolve(url) }
+        Regex("uqload", RegexOption.IGNORE_CASE) to { url -> Uqload.resolve(url) },
+        Regex("filemoo", RegexOption.IGNORE_CASE) to { url -> WebViewStream.resolve(url) },
+        Regex("dood", RegexOption.IGNORE_CASE) to { url -> WebViewStream.resolve(url) }
     )
 
     val skippedHosts: Map<String, String> = mapOf(
         "mxdrop.sx" to "captcha-gate",
         "vixeo.io" to "host-down-522",
         "playmate.to" to "host-down-525",
-        "filemoon0.top" to "antibot-pow",
         "anonstream.co" to "untested"
     )
 
     private val skippedHostPatterns: List<Pair<Regex, String>> = listOf(
-        Regex("filemoo?n", RegexOption.IGNORE_CASE) to "Requiere JavaScript"
+        Regex("mxdrop", RegexOption.IGNORE_CASE) to "captcha-gate"
     )
 
     fun hostOf(url: String): String? = try {

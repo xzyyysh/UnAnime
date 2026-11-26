@@ -24,6 +24,7 @@ object ApiClient {
         val app = context.applicationContext
         appContext = app
         com.notanime.es.net.CronetHttp.init(app)
+        com.notanime.es.extractor.WebViewStream.init(app)
         syncedUserAgent = WebSettings.getDefaultUserAgent(app)
         com.notanime.es.net.CronetHttp.configure(defaultUserAgent = syncedUserAgent)
         DebugCapture.dir = File(app.cacheDir, "captures").apply { mkdirs() }
