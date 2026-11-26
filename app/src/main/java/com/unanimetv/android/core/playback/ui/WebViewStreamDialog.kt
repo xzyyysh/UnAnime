@@ -46,6 +46,24 @@ private fun tapAt(webview: WebView, x: Float, y: Float) {
     up.recycle()
 }
 
+private const val GATE_CLICK_SCRIPT =
+    "<script>(function(){var n=0;var t=setInterval(function(){var b=document.querySelector('.captcha-gate__play');if(b){b.click();}if(++n>40)clearInterval(t);},400);})();</script>"
+
+private fun injectedGateResponse(url: String): android.webkit.WebResourceResponse? {
+    return try {
+        val body = kotlinx.coroutines.runBlocking { com.notanime.es.net.CronetHttp.get(url) }.body
+        val injected = body.replace("</body>", "$GATE_CLICK_SCRIPT</body>")
+        android.webkit.WebResourceResponse(
+            "text/html",
+            "utf-8",
+            java.io.ByteArrayInputStream(injected.toByteArray(Charsets.UTF_8))
+        )
+    } catch (e: Exception) {
+        com.notanime.es.util.UnAnimeLog.w("webview-stream", "gate injection failed", e)
+        null
+    }
+}
+
 private fun familyOf(host: String): String? = when {
     host.contains("filemoo", ignoreCase = true) || host.contains("n1mwq", ignoreCase = true) -> "filemoon"
     host.contains("dood", ignoreCase = true) || host.contains("playmogo", ignoreCase = true) -> "dood"
@@ -127,7 +145,6 @@ fun WebViewStreamDialog(
                             settings.domStorageEnabled = true
                             settings.mediaPlaybackRequiresUserGesture = false
                             var loadStartedAt = 0L
-                            var frameRedirected = false
                             webViewClient = object : WebViewClient() {
                                 override fun shouldOverrideUrlLoading(
                                     view: WebView,
@@ -152,15 +169,12 @@ fun WebViewStreamDialog(
                                     request: WebResourceRequest
                                 ): WebResourceResponse? {
                                     val target = request.url.toString()
-                                    if (!captured && !frameRedirected &&
+                                    if (!captured &&
                                         request.url.host.orEmpty().contains("n1mwq") &&
                                         !request.isForMainFrame &&
                                         request.requestHeaders["Accept"]?.contains("text/html") == true
                                     ) {
-                                        frameRedirected = true
-                                        loadStartedAt = System.currentTimeMillis()
-                                        view.post { view.loadUrl(target) }
-                                        return null
+                                        return injectedGateResponse(target)
                                     }
                                     val isMedia = target.contains(".m3u8") || target.contains(".mp4")
                                     val warmedUp = loadStartedAt == 0L ||
