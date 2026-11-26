@@ -2,8 +2,6 @@ package com.unanimetv.android.feature.episode.ui
 
 import android.app.Activity
 import android.Manifest
-import android.content.ComponentName
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -23,7 +21,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,16 +37,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -58,11 +52,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
@@ -70,7 +62,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -84,10 +75,7 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
-import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
 import coil3.compose.AsyncImage
 import com.notanime.es.extractor.StreamInfo
 import com.notanime.es.scraper.EpisodeEntry
@@ -103,10 +91,13 @@ import com.unanimetv.android.core.favorites.FavoriteEpisode
 import com.unanimetv.android.core.favorites.FavoritesStore
 import com.unanimetv.android.core.media.ImageDownloader
 import com.unanimetv.android.core.playback.CurrentStream
-import com.unanimetv.android.core.playback.PlayerFullscreen
+import com.unanimetv.android.core.playback.ui.FullscreenPlaybackEffect
+import com.unanimetv.android.core.playback.ui.LanguageGroup
+import com.unanimetv.android.core.playback.ui.PlayerSurface
+import com.unanimetv.android.core.playback.ui.PlayerVideo
+import com.unanimetv.android.core.playback.ui.rememberMediaController
 import com.unanimetv.android.core.playback.PlaybackStore
 import com.unanimetv.android.ui.LinkMenu
-import com.unanimetv.android.playback.PlaybackService
 
 private val ShellClearance = 120.dp
 
@@ -160,70 +151,13 @@ private fun EpisodeContent(
 
     LaunchedEffect(Unit) { FavoritesStore.init(context) }
 
-    var controller by remember { mutableStateOf<MediaController?>(null) }
     var started by remember { mutableStateOf(false) }
     var fullscreen by remember { mutableStateOf(false) }
     var qualityIndex by remember { mutableStateOf(0) }
     var loadedUrl by remember { mutableStateOf<String?>(null) }
     var previewIndex by remember { mutableStateOf<Int?>(null) }
 
-    val urlState by rememberUpdatedState(uiState.url)
-
-    DisposableEffect(Unit) {
-        val token = SessionToken(context, ComponentName(context, PlaybackService::class.java))
-        val future = MediaController.Builder(context, token).buildAsync()
-        future.addListener({
-            controller = try {
-                future.get()
-            } catch (e: Exception) {
-                UnAnimeLog.e("player", "controller connect failed", e)
-                null
-            }
-        }, ContextCompat.getMainExecutor(context))
-        onDispose {
-            controller?.let { c ->
-                if (c.currentMediaItem != null) {
-                    PlaybackStore.put(urlState, c.currentPosition)
-                }
-                c.stop()
-                c.clearMediaItems()
-                c.release()
-                UnAnimeLog.d("player", "controller released")
-            }
-            MediaController.releaseFuture(future)
-        }
-    }
-
-    DisposableEffect(controller) {
-        val c = controller ?: return@DisposableEffect onDispose { }
-        val listener = object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                val name = when (state) {
-                    Player.STATE_IDLE -> "idle"
-                    Player.STATE_BUFFERING -> "buffering"
-                    Player.STATE_READY -> "ready"
-                    Player.STATE_ENDED -> "ended"
-                    else -> "unknown"
-                }
-                UnAnimeLog.d("player", "state=$name")
-            }
-
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                UnAnimeLog.d("player", "playing=$isPlaying")
-                if (isPlaying) started = true
-            }
-
-            override fun onRenderedFirstFrame() {
-                UnAnimeLog.d("player", "first frame rendered")
-            }
-
-            override fun onPlayerError(error: PlaybackException) {
-                UnAnimeLog.e("player", "playback error ${error.errorCodeName}", error)
-            }
-        }
-        c.addListener(listener)
-        onDispose { c.removeListener(listener) }
-    }
+    val controller = rememberMediaController(uiState.url) { if (it) started = true }
 
     val stream = uiState.selectedServer?.stream
     val qualities = stream?.qualities.orEmpty()
@@ -261,30 +195,7 @@ private fun EpisodeContent(
         loadedUrl = uiState.url
     }
 
-    val activity = context as? Activity
-    DisposableEffect(fullscreen) {
-        PlayerFullscreen.set(fullscreen)
-        if (fullscreen && activity != null) {
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-            androidx.core.view.WindowCompat.getInsetsController(activity.window, activity.window.decorView).apply {
-                systemBarsBehavior =
-                    androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
-            }
-        }
-        onDispose {
-            PlayerFullscreen.set(false)
-            if (activity != null) {
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                androidx.core.view.WindowCompat.getInsetsController(activity.window, activity.window.decorView)
-                    .show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
-            }
-        }
-    }
-
-    androidx.activity.compose.BackHandler(enabled = fullscreen) {
-        fullscreen = false
-    }
+    FullscreenPlaybackEffect(fullscreen) { fullscreen = false }
 
     LaunchedEffect(uiState.url) {
         val c = controller
@@ -780,309 +691,6 @@ private fun ScreenshotPreview(
 }
 
 @Composable
-private fun PlayerSurface(
-    selectedServer: SourceServer?,
-    languages: List<LanguageGroup>,
-    selectedLanguage: String?,
-    isLoading: Boolean,
-    resolvingUrl: String?,
-    backdropUrl: String?,
-    started: Boolean,
-    fullscreenActive: Boolean,
-    title: String?,
-    stream: StreamInfo?,
-    qualityIndex: Int,
-    player: Player?,
-    onSelectLanguage: (String) -> Unit,
-    onSelectServer: (SourceServer) -> Unit,
-    onPlay: () -> Unit,
-    onToggleFullscreen: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val picking = !started && (selectedServer == null || selectedServer.error != null)
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(16f / 9f)
-            .clip(MaterialTheme.shapes.large)
-            .background(Color.Black),
-        contentAlignment = Alignment.Center
-    ) {
-        when {
-            isLoading -> com.unanimetv.android.ui.NotAnimeLoader(
-                compact = true,
-                modifier = Modifier.fillMaxSize()
-            )
-            !started -> BackdropBanner(
-                backdropUrl = backdropUrl,
-                canPlay = stream != null,
-                resolving = resolvingUrl != null,
-                onPlay = onPlay
-            )
-            player != null && stream != null && !fullscreenActive -> PlayerVideo(
-                player = player,
-                title = title,
-                fullscreen = false,
-                onToggleFullscreen = onToggleFullscreen,
-                modifier = Modifier.fillMaxSize()
-            )
-            fullscreenActive -> Box(modifier = Modifier.fillMaxSize().background(Color.Black))
-            player == null -> com.unanimetv.android.ui.NotAnimeLoader(
-                compact = true,
-                modifier = Modifier.fillMaxSize()
-            )
-            selectedServer == null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_tabler_player_play),
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(48.dp)
-                )
-                Text(
-                    text = "Selecciona un servidor",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White,
-                    modifier = Modifier.padding(top = Spacing.sm)
-                )
-            }
-            stream == null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_tabler_alert_circle),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(48.dp)
-                )
-                Text(
-                    text = selectedServer?.error ?: selectedServer?.skipReason ?: "No disponible",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = Spacing.sm)
-                )
-            }
-        }
-        if (picking) {
-            ServerPicker(
-                languages = languages,
-                selectedLanguage = selectedLanguage,
-                servers = languages.firstOrNull { it.lang == selectedLanguage }?.servers.orEmpty(),
-                selectedServer = selectedServer,
-                resolvingUrl = resolvingUrl,
-                onSelectLanguage = onSelectLanguage,
-                onSelectServer = onSelectServer,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-    }
-}
-
-@Composable
-private fun ServerPicker(
-    languages: List<LanguageGroup>,
-    selectedLanguage: String?,
-    servers: List<SourceServer>,
-    selectedServer: SourceServer?,
-    resolvingUrl: String?,
-    onSelectLanguage: (String) -> Unit,
-    onSelectServer: (SourceServer) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .background(Color.Black.copy(alpha = 0.55f))
-            .padding(Spacing.sm),
-        verticalArrangement = Arrangement.spacedBy(Spacing.xs),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (languages.isNotEmpty()) {
-            LanguageSelector(
-                languages = languages,
-                selectedLanguage = selectedLanguage,
-                onSelectLanguage = onSelectLanguage
-            )
-        }
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
-        ) {
-            servers.forEach { server ->
-                ServerOptionCard(
-                    server = server,
-                    selected = server == selectedServer,
-                    resolving = resolvingUrl == server.url,
-                    onClick = { onSelectServer(server) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ServerOptionCard(
-    server: SourceServer,
-    selected: Boolean,
-    resolving: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val container = if (selected) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        Color.White.copy(alpha = 0.08f)
-    }
-    Row(
-        modifier = modifier
-            .fillMaxWidth(0.72f)
-            .clip(MaterialTheme.shapes.small)
-            .background(container)
-            .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
-    ) {
-        if (server.icon.isNotEmpty()) {
-            AsyncImage(
-                model = server.icon,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(22.dp)
-                    .clip(androidx.compose.foundation.shape.CircleShape)
-            )
-        } else {
-            Icon(
-                painter = painterResource(R.drawable.ic_tabler_player_play),
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = server.name,
-                style = MaterialTheme.typography.labelLarge,
-                color = if (selected) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    Color.White
-                },
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            val detail = server.description.ifEmpty {
-                server.error ?: server.skipReason.orEmpty()
-            }
-            if (detail.isNotEmpty()) {
-                Text(
-                    text = detail,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (selected) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        Color.White.copy(alpha = 0.7f)
-                    },
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-        if (resolving) {
-            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
-        }
-    }
-}
-
-@Composable
-private fun BackdropBanner(
-    backdropUrl: String?,
-    canPlay: Boolean,
-    resolving: Boolean,
-    onPlay: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(modifier = modifier.fillMaxSize()) {
-        if (backdropUrl != null) {
-            AsyncImage(
-                model = backdropUrl,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .blur(18.dp)
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.45f))
-        )
-        when {
-            resolving -> CircularProgressIndicator(
-                color = Color.White,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(72.dp)
-            )
-            canPlay -> IconButton(
-                onClick = onPlay,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(72.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_tabler_player_play),
-                    contentDescription = "Reproducir",
-                    tint = Color.White,
-                    modifier = Modifier.size(72.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun LanguageSelector(
-    languages: List<LanguageGroup>,
-    selectedLanguage: String?,
-    onSelectLanguage: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.horizontalScroll(rememberScrollState()),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
-    ) {
-        languages.forEach { group ->
-            val selected = group.lang == selectedLanguage
-            Surface(
-                shape = androidx.compose.foundation.shape.CircleShape,
-                color = Color.Black.copy(alpha = 0.45f),
-                onClick = { onSelectLanguage(group.lang) },
-                modifier = Modifier.graphicsLayer { alpha = if (selected) 1f else 0.4f }
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.size(34.dp)
-                ) {
-                    val flag = languageFlag(group.lang)
-                    if (flag != null) {
-                        Text(text = flag, style = MaterialTheme.typography.headlineSmall)
-                    } else {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_tabler_world),
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun EpisodeList(
     seasons: List<SeasonEpisodes>,
     currentUrl: String,
@@ -1239,11 +847,4 @@ private fun EpisodeNavBar(
             )
         }
     }
-}
-
-private fun languageFlag(lang: String): String? = when (lang.uppercase()) {
-    "SUB" -> "🇯🇵"
-    "LAT" -> "🇲🇽"
-    "ES" -> "🇪🇸"
-    else -> null
 }

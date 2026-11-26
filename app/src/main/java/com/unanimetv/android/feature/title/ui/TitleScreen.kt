@@ -66,13 +66,13 @@ import com.unanimetv.android.core.designsystem.component.EmptyState
 import com.unanimetv.android.core.designsystem.component.LoadingState
 import com.unanimetv.android.core.designsystem.component.StatusBadge
 import com.unanimetv.android.core.designsystem.tokens.Spacing
+import com.unanimetv.android.core.playback.ui.PlayerVideo
 import com.unanimetv.android.ui.LinkMenu
 
 @Composable
 fun TitleScreen(
     url: String,
     onEpisodeClick: (String) -> Unit,
-    onOpenPlayer: (String) -> Unit,
     onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -80,9 +80,6 @@ fun TitleScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     LaunchedEffect(Unit) { FavoritesStore.init(context) }
-    LaunchedEffect(uiState.data) {
-        if (uiState.data?.type == "movie") onOpenPlayer(url)
-    }
 
     when {
         uiState.isLoading -> LoadingState(modifier = modifier)
@@ -122,102 +119,134 @@ private fun TitleContent(
     val infoScroll = rememberScrollState()
     val episodesScroll = rememberScrollState()
     val pageScroll = rememberScrollState()
+    val playback = if (data.type == "movie") {
+        rememberMoviePlayback(url = data.url, title = data.title, posterUrl = data.poster)
+    } else {
+        null
+    }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_tabler_arrow_back),
-                    contentDescription = "Volver",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            LinkMenu(
-                url = data.url,
-                isFavorite = isFavorite,
-                onToggleFavorite = {
-                    if (isFavorite) {
-                        FavoritesStore.remove(data.url)
-                    } else {
-                        FavoritesStore.add(
-                            FavoriteAnime(
-                                url = data.url,
-                                title = data.title,
-                                image = data.poster,
-                                rating = data.rating.value?.let { String.format(Locale.US, "%.1f", it) }
-                            )
-                        )
-                    }
-                    Toast.makeText(
-                        context,
-                        if (isFavorite) "Quitado de favoritos" else "Agregado a favoritos",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            )
-        }
-        if (wide) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
             Row(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(start = Spacing.lg, end = Spacing.lg)
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    modifier = Modifier
-                        .weight(0.42f)
-                        .fillMaxHeight()
-                        .verticalScroll(infoScroll)
-                        .padding(end = Spacing.xl, bottom = BottomClearance)
-                ) {
-                    TitleInfo(
-                        data = data,
-                        posterWidth = 176.dp,
-                        onArtworkClick = { previewArtwork = true }
+                IconButton(onClick = onBack) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_tabler_arrow_back),
+                        contentDescription = "Volver",
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
+                Spacer(modifier = Modifier.weight(1f))
+                LinkMenu(
+                    url = data.url,
+                    isFavorite = isFavorite,
+                    onToggleFavorite = {
+                        if (isFavorite) {
+                            FavoritesStore.remove(data.url)
+                        } else {
+                            FavoritesStore.add(
+                                FavoriteAnime(
+                                    url = data.url,
+                                    title = data.title,
+                                    image = data.poster,
+                                    rating = data.rating.value?.let { String.format(Locale.US, "%.1f", it) }
+                                )
+                            )
+                        }
+                        Toast.makeText(
+                            context,
+                            if (isFavorite) "Quitado de favoritos" else "Agregado a favoritos",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                )
+            }
+            if (wide) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = Spacing.lg, end = Spacing.lg)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .weight(0.42f)
+                            .fillMaxHeight()
+                            .verticalScroll(infoScroll)
+                            .padding(end = Spacing.xl, bottom = BottomClearance)
+                    ) {
+                        playback?.let { pb ->
+                            MoviePlayerSurface(playback = pb, modifier = Modifier.padding(bottom = Spacing.md))
+                        }
+                        TitleInfo(
+                            data = data,
+                            posterWidth = 176.dp,
+                            onArtworkClick = { previewArtwork = true }
+                        )
+                    }
+                    Column(
+                        modifier = Modifier
+                            .weight(0.58f)
+                            .fillMaxHeight()
+                            .verticalScroll(episodesScroll)
+                            .padding(bottom = BottomClearance)
+                    ) {
+                        if (data.seasons.isNotEmpty()) {
+                            EpisodesSection(
+                                data = data,
+                                selectedSeason = activeSeason,
+                                onSeasonSelect = onSeasonSelect,
+                                onEpisodeClick = onEpisodeClick,
+                                modifier = Modifier.padding(top = Spacing.sm)
+                            )
+                        }
+                    }
+                }
+            } else {
                 Column(
                     modifier = Modifier
-                        .weight(0.58f)
-                        .fillMaxHeight()
-                        .verticalScroll(episodesScroll)
+                        .fillMaxSize()
+                        .verticalScroll(pageScroll)
+                        .padding(horizontal = Spacing.lg)
                         .padding(bottom = BottomClearance)
                 ) {
-                    EpisodesSection(
+                    playback?.let { pb ->
+                        MoviePlayerSurface(playback = pb, modifier = Modifier.padding(top = Spacing.sm))
+                    }
+                    TitleInfo(
                         data = data,
-                        selectedSeason = activeSeason,
-                        onSeasonSelect = onSeasonSelect,
-                        onEpisodeClick = onEpisodeClick,
-                        modifier = Modifier.padding(top = Spacing.sm)
+                        posterWidth = 120.dp,
+                        onArtworkClick = { previewArtwork = true }
                     )
+                    if (data.seasons.any { it.episodes.isNotEmpty() }) {
+                        EpisodesSection(
+                            data = data,
+                            selectedSeason = activeSeason,
+                            onSeasonSelect = onSeasonSelect,
+                            onEpisodeClick = onEpisodeClick,
+                            modifier = Modifier.padding(top = Spacing.sm)
+                        )
+                    }
                 }
             }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(pageScroll)
-                    .padding(horizontal = Spacing.lg)
-                    .padding(bottom = BottomClearance)
-            ) {
-                TitleInfo(
-                    data = data,
-                    posterWidth = 120.dp,
-                    onArtworkClick = { previewArtwork = true }
-                )
-                if (data.seasons.any { it.episodes.isNotEmpty() }) {
-                    EpisodesSection(
-                        data = data,
-                        selectedSeason = activeSeason,
-                        onSeasonSelect = onSeasonSelect,
-                        onEpisodeClick = onEpisodeClick,
-                        modifier = Modifier.padding(top = Spacing.sm)
+        }
+        playback?.let { pb ->
+            if (pb.fullscreen && pb.controller != null && pb.stream != null) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(Color.Black)
+                ) {
+                    PlayerVideo(
+                        player = pb.controller!!,
+                        title = pb.uiState.title,
+                        fullscreen = true,
+                        onToggleFullscreen = { pb.fullscreen = false },
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
             }

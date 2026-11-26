@@ -92,11 +92,6 @@ fun UnAnimeNavHost(
             TitleScreen(
                 url = url,
                 onEpisodeClick = { navController.navigate(episodeRoute(it)) },
-                onOpenPlayer = { playerUrl ->
-                    navController.navigate(episodeRoute(playerUrl)) {
-                        popUpTo(entry.id) { inclusive = true }
-                    }
-                },
                 onBack = { navController.popBackStack() }
             )
         }

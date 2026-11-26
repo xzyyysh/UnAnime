@@ -1,4 +1,4 @@
-package com.unanimetv.android.feature.episode.ui
+package com.unanimetv.android.core.playback.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
