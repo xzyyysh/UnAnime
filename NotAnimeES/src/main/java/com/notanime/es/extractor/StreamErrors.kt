@@ -36,7 +36,7 @@ object StreamErrors {
             }
         } catch (e: Exception) {
             UnAnimeLog.w("stream-errors", "probe failed $url", e)
-            null
+            "Sin conexión al servidor"
         }
     }
 }
