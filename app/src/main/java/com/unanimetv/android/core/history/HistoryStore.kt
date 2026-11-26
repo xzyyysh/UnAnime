@@ -56,6 +56,21 @@ object HistoryStore {
         }
     }
 
+    fun remove(url: String) {
+        synchronized(this) {
+            _entries.value = _entries.value.filterNot { it.url == url }
+            persist()
+        }
+    }
+
+    fun removeUrls(urls: Collection<String>) {
+        if (urls.isEmpty()) return
+        synchronized(this) {
+            _entries.value = _entries.value.filterNot { it.url in urls }
+            persist()
+        }
+    }
+
     fun episode(url: String): HistoryEntry? = _entries.value.firstOrNull { it.url == url }
 
     private fun read(): List<HistoryEntry> {

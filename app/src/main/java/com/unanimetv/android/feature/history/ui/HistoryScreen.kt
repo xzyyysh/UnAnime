@@ -2,6 +2,7 @@ package com.unanimetv.android.feature.history.ui
 
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,19 +16,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.unanimetv.android.R
@@ -59,6 +68,9 @@ fun HistoryScreen(
     val entries by HistoryStore.entries.collectAsState()
     val progress by PlaybackStore.progress.collectAsState()
     var tab by remember { mutableIntStateOf(0) }
+    var selecting by remember { mutableStateOf(false) }
+    val selected = remember { mutableListOf<String>().toMutableStateList() }
+    var confirmDelete by remember { mutableStateOf(false) }
     val wide = LocalConfiguration.current.screenWidthDp >= 600
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -81,21 +93,64 @@ fun HistoryScreen(
                     )
                 }
                 Text(
-                    text = "Historial",
+                    text = if (selecting) "Seleccionados ${selected.size}" else "Historial",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                Spacer(modifier = Modifier.weight(1f))
+                if (selecting) {
+                    TextButton(onClick = {
+                        selecting = false
+                        selected.clear()
+                    }) {
+                        Text(text = "Cancelar")
+                    }
+                } else {
+                    TextButton(onClick = { selecting = true }) {
+                        Text(text = "Seleccionar")
+                    }
+                }
+            }
+            if (selecting) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                    modifier = Modifier.padding(horizontal = Spacing.lg)
+                ) {
+                    HistoryTab(
+                        label = "Todos",
+                        count = 0,
+                        selected = false,
+                        onClick = {
+                            val visible = if (tab == 0) entries else entries.filter {
+                                (progress[it.url]?.durationMs ?: 0L) > 0L
+                            }
+                            if (selected.size == visible.size) selected.clear()
+                            else {
+                                selected.clear()
+                                selected.addAll(visible.map { it.url })
+                            }
+                        }
+                    )
+                }
             }
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 modifier = Modifier.padding(horizontal = Spacing.lg)
             ) {
-                HistoryTab(label = "Vistos", count = entries.size, selected = tab == 0, onClick = { tab = 0 })
+                HistoryTab(label = "Vistos", count = entries.size, selected = tab == 0, onClick = {
+                    tab = 0
+                    selecting = false
+                    selected.clear()
+                })
                 HistoryTab(
                     label = "Progreso",
                     count = progress.values.count { it.durationMs > 0 },
                     selected = tab == 1,
-                    onClick = { tab = 1 }
+                    onClick = {
+                        tab = 1
+                        selecting = false
+                        selected.clear()
+                    }
                 )
             }
             if (tab == 0) {
@@ -118,8 +173,13 @@ fun HistoryScreen(
                                 progress = progress[entry.url]?.fraction ?: 0f,
                                 showProgress = entry.type == "episode",
                                 wide = wide,
+                                selecting = selecting,
+                                selected = entry.url in selected,
                                 onClick = {
-                                    if (entry.type == "title") onTitleClick(entry.url)
+                                    if (selecting) {
+                                        if (entry.url in selected) selected.remove(entry.url)
+                                        else selected.add(entry.url)
+                                    } else if (entry.type == "title") onTitleClick(entry.url)
                                     else onEpisodeClick(entry.url)
                                 }
                             )
@@ -150,12 +210,86 @@ fun HistoryScreen(
                                 progress = p.fraction,
                                 showProgress = true,
                                 wide = wide,
+                                selecting = selecting,
+                                selected = entry.url in selected,
                                 onClick = {
-                                    if (entry.type == "title") onTitleClick(entry.url)
+                                    if (selecting) {
+                                        if (entry.url in selected) selected.remove(entry.url)
+                                        else selected.add(entry.url)
+                                    } else if (entry.type == "title") onTitleClick(entry.url)
                                     else onEpisodeClick(entry.url)
                                 }
                             )
                         }
+                    }
+                }
+            }
+        }
+        if (selecting) {
+            Button(
+                onClick = { confirmDelete = true },
+                enabled = selected.isNotEmpty(),
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .navigationBarsPadding()
+                    .padding(end = Spacing.lg, bottom = Spacing.lg)
+            ) {
+                Text(text = "Eliminar ${selected.size}")
+            }
+        }
+    }
+    if (confirmDelete) {
+        DeleteConfirmDialog(
+            count = selected.size,
+            onConfirm = {
+                HistoryStore.removeUrls(selected)
+                selected.clear()
+                selecting = false
+                confirmDelete = false
+            },
+            onDismiss = { confirmDelete = false }
+        )
+    }
+}
+
+@Composable
+private fun DeleteConfirmDialog(
+    count: Int,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            shape = MaterialTheme.shapes.large
+        ) {
+            Column(modifier = Modifier.padding(Spacing.lg)) {
+                Text(
+                    text = "¿Eliminar del historial?",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Se eliminarán $count elementos.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = Spacing.xs)
+                )
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Spacing.md)
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(text = "Cancelar")
+                    }
+                    TextButton(onClick = onConfirm) {
+                        Text(
+                            text = "Eliminar",
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 }
             }
@@ -216,12 +350,25 @@ private fun HistoryRow(
     progress: Float,
     showProgress: Boolean,
     wide: Boolean,
+    selecting: Boolean,
+    selected: Boolean,
     onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
+            .then(
+                if (selected) {
+                    Modifier.border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = MaterialTheme.shapes.medium
+                    )
+                } else {
+                    Modifier
+                }
+            )
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable(onClick = onClick)
             .padding(Spacing.md),
@@ -238,6 +385,20 @@ private fun HistoryRow(
                 .clip(MaterialTheme.shapes.small)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
         )
+        if (selecting && selected) {
+            Box(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                    .padding(3.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_tabler_check),
+                    contentDescription = "Seleccionado",
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+        }
         Column(modifier = Modifier.weight(1f)) {
             if (entry.type == "episode" && entry.label != null) {
                 Text(
