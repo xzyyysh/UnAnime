@@ -93,7 +93,8 @@ fun EpisodeScreen(
         WebViewStreamDialog(
             url = webviewUrl,
             onStream = { mediaUrl, referer -> viewModel.onWebviewStream(webviewUrl, mediaUrl, referer) },
-            onDismiss = viewModel::dismissWebview
+            onDismiss = viewModel::dismissWebview,
+            onTimeout = viewModel::onWebviewTimeout
         )
     }
 

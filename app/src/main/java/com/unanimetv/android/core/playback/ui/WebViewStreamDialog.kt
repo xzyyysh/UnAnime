@@ -75,7 +75,8 @@ private fun familyOf(host: String): String? = when {
 fun WebViewStreamDialog(
     url: String,
     onStream: (String, String?) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onTimeout: () -> Unit = onDismiss
 ) {
     var captured by remember { mutableStateOf(false) }
     var webviewRef by remember { mutableStateOf<WebView?>(null) }
@@ -84,7 +85,7 @@ fun WebViewStreamDialog(
 
     LaunchedEffect(url) {
         delay(TIMEOUT_MS)
-        onDismiss()
+        onTimeout()
     }
 
     LaunchedEffect(url, webviewRef) {

@@ -104,6 +104,23 @@ class EpisodeViewModel(
         _uiState.update { it.copy(webviewUrl = null) }
     }
 
+    fun onWebviewTimeout() {
+        val server = webviewServer
+        webviewServer = null
+        if (server == null) {
+            _uiState.update { it.copy(webviewUrl = null) }
+            return
+        }
+        val failed = server.copy(error = "El stream no respondió")
+        _uiState.update { state ->
+            state.copy(
+                webviewUrl = null,
+                languages = state.languages.mapServers(server.url) { failed },
+                selectedServer = failed
+            )
+        }
+    }
+
     fun openEpisode(url: String) {
         if (url == currentUrl) return
         resolveJob?.cancel()

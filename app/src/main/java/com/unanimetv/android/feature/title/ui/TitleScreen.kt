@@ -313,7 +313,8 @@ private fun TitleContent(
                 WebViewStreamDialog(
                     url = webviewUrl,
                     onStream = { mediaUrl, referer -> pb.onWebviewStream(webviewUrl, mediaUrl, referer) },
-                    onDismiss = pb.onDismissWebview
+                    onDismiss = pb.onDismissWebview,
+                    onTimeout = pb.onWebviewTimeout
                 )
             }
         }

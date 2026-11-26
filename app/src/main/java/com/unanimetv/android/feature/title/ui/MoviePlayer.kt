@@ -32,7 +32,8 @@ class MoviePlayback(
     val onSelectServer: (SourceServer) -> Unit,
     val onReload: () -> Unit,
     val onWebviewStream: (String, String, String?) -> Unit,
-    val onDismissWebview: () -> Unit
+    val onDismissWebview: () -> Unit,
+    val onWebviewTimeout: () -> Unit
 ) {
     var uiState by mutableStateOf(EpisodeUiState(url = url))
     var controller by mutableStateOf<MediaController?>(null)
@@ -60,7 +61,8 @@ fun rememberMoviePlayback(
             viewModel::selectServer,
             viewModel::reload,
             viewModel::onWebviewStream,
-            viewModel::dismissWebview
+            viewModel::dismissWebview,
+            viewModel::onWebviewTimeout
         )
     }
     val uiState by viewModel.uiState.collectAsState()
