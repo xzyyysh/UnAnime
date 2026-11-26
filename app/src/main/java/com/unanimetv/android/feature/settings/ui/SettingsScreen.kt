@@ -185,7 +185,7 @@ private fun AboutCard() {
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(Spacing.xs))
-                    Text(text = "GitHub")
+                    Text(text = "GitHub", style = MaterialTheme.typography.labelMedium)
                 }
                 Button(
                     onClick = {
@@ -199,7 +199,7 @@ private fun AboutCard() {
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(Spacing.xs))
-                    Text(text = "AnimeOnline")
+                    Text(text = "AnimeOnline", style = MaterialTheme.typography.labelMedium)
                 }
             }
             Spacer(modifier = Modifier.height(Spacing.sm))
