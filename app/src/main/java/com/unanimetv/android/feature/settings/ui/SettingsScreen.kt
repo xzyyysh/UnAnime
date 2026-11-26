@@ -199,7 +199,7 @@ private fun AboutCard() {
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(Spacing.xs))
-                    Text(text = "AnimeOnlineNinja")
+                    Text(text = "AnimeOnline")
                 }
             }
             Spacer(modifier = Modifier.height(Spacing.sm))
