@@ -112,7 +112,8 @@ private fun TitleContent(
     val context = LocalContext.current
     val favorites by FavoritesStore.favorites.collectAsState()
     val isFavorite = favorites.any { it.url == data.url }
-    val wide = LocalConfiguration.current.screenWidthDp >= 600
+    val configuration = LocalConfiguration.current
+    val wide = configuration.screenWidthDp >= 600 && configuration.screenHeightDp >= 480
     val season = data.seasons.firstOrNull { it.season == selectedSeason } ?: data.seasons.firstOrNull()
     val activeSeason = season?.season ?: 0
     var previewArtwork by remember { mutableStateOf(false) }
@@ -124,6 +125,7 @@ private fun TitleContent(
     } else {
         null
     }
+    val bottomGap = (LocalConfiguration.current.screenHeightDp * 0.012f).dp
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -180,7 +182,10 @@ private fun TitleContent(
                             .padding(end = Spacing.xl, bottom = BottomClearance)
                     ) {
                         playback?.let { pb ->
-                            MoviePlayerSurface(playback = pb, modifier = Modifier.padding(bottom = Spacing.md))
+                            MoviePlayerSurface(
+                                playback = pb,
+                                modifier = Modifier.padding(bottom = Spacing.md + bottomGap)
+                            )
                         }
                         TitleInfo(
                             data = data,
@@ -215,7 +220,10 @@ private fun TitleContent(
                         .padding(bottom = BottomClearance)
                 ) {
                     playback?.let { pb ->
-                        MoviePlayerSurface(playback = pb, modifier = Modifier.padding(top = Spacing.sm))
+                        MoviePlayerSurface(
+                            playback = pb,
+                            modifier = Modifier.padding(top = Spacing.sm, bottom = bottomGap)
+                        )
                     }
                     TitleInfo(
                         data = data,

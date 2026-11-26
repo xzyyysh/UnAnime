@@ -215,7 +215,8 @@ private fun EpisodeContent(
 
     val configuration = LocalConfiguration.current
     val topInset = (configuration.screenHeightDp * 0.015f).dp
-    val wide = configuration.screenWidthDp >= 600
+    val bottomGap = (configuration.screenHeightDp * 0.012f).dp
+    val wide = configuration.screenWidthDp >= 600 && configuration.screenHeightDp >= 480
 
     val playerSlot = remember {
         movableContentOf<PlayerSlotArgs> { args ->
@@ -368,7 +369,7 @@ private fun EpisodeContent(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = Spacing.sm + topInset)
+                            .padding(top = Spacing.sm + topInset, bottom = bottomGap)
                     ) {
                         playerSlot(slotArgs)
                     }
