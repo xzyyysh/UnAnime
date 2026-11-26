@@ -1,8 +1,12 @@
 package com.unanimetv.android.feature.settings.ui
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,12 +49,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import coil3.imageLoader
 import com.unanimetv.android.R
 import com.unanimetv.android.core.BuildInfo
 import com.unanimetv.android.core.designsystem.theme.ThemeController
 import com.unanimetv.android.core.playback.CurrentStream
 import com.unanimetv.android.core.update.UpdateChecker
+import com.unanimetv.android.core.update.UpdateNotifier
 import com.unanimetv.android.core.designsystem.theme.ThemeMode
 import com.unanimetv.android.core.designsystem.theme.ThemeStyle
 import com.unanimetv.android.core.designsystem.theme.label
@@ -101,6 +107,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(Spacing.lg))
         UpdateCard()
         Spacer(modifier = Modifier.height(Spacing.lg))
+        NotificationsCard()
+        Spacer(modifier = Modifier.height(Spacing.lg))
         AboutCard()
         Spacer(modifier = Modifier.height(Spacing.md))
         Text(
@@ -111,6 +119,90 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
         Spacer(modifier = Modifier.height(120.dp))
+    }
+}
+
+@Composable
+private fun NotificationsCard() {
+    val context = LocalContext.current
+    var enabled by remember { mutableStateOf(UpdateNotifier.isEnabled(context)) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            UpdateNotifier.setEnabled(context, true)
+            UpdateNotifier.schedule(context)
+            enabled = true
+        }
+    }
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        shape = MaterialTheme.shapes.large,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(Spacing.lg)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+            ) {
+                Icon(
+                    painterResource(R.drawable.ic_tabler_download),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Notificaciones",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Spacer(modifier = Modifier.height(Spacing.md))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Avisos de actualización",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Notifica cuando haya una nueva versión disponible",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = enabled,
+                    onCheckedChange = { turnOn ->
+                        when {
+                            turnOn -> {
+                                if (Build.VERSION.SDK_INT >= 33 &&
+                                    ContextCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.POST_NOTIFICATIONS
+                                    ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    UpdateNotifier.setEnabled(context, true)
+                                    UpdateNotifier.schedule(context)
+                                    enabled = true
+                                }
+                            }
+                            else -> {
+                                UpdateNotifier.setEnabled(context, false)
+                                UpdateNotifier.schedule(context)
+                                enabled = false
+                            }
+                        }
+                    }
+                )
+            }
+        }
     }
 }
 

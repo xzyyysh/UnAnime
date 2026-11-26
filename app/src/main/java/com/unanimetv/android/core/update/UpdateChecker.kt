@@ -28,6 +28,12 @@ object UpdateChecker {
         val apkSize: Long
     )
 
+    sealed class Outcome {
+        data class Available(val update: Update) : Outcome()
+        data object None : Outcome()
+        data object Unreachable : Outcome()
+    }
+
     sealed class Download {
         data object Idle : Download()
         data class Downloading(val progress: Float, val speedMbps: Float) : Download()
@@ -102,20 +108,20 @@ object UpdateChecker {
         _openFromNotification.value = false
     }
 
-    suspend fun pollForNotification(context: Context): Update? = withContext(Dispatchers.IO) {
+    suspend fun pollForNotification(context: Context): Outcome = withContext(Dispatchers.IO) {
         val latest = runCatching { fetchLatest() }
             .onFailure { UnAnimeLog.w("update", "background check failed: ${it.message}") }
-            .getOrNull() ?: return@withContext null
-        if (!isNewer(latest.version, com.unanimetv.android.core.BuildInfo.version)) return@withContext null
+            .getOrNull() ?: return@withContext Outcome.Unreachable
+        if (!isNewer(latest.version, com.unanimetv.android.core.BuildInfo.version)) return@withContext Outcome.None
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        if (prefs.getString(KEY_NOTIFIED_VERSION, null) == latest.version) return@withContext null
+        if (prefs.getString(KEY_NOTIFIED_VERSION, null) == latest.version) return@withContext Outcome.None
         val snoozedVersion = prefs.getString(KEY_SNOOZED_VERSION, null)
         val snoozedAt = prefs.getLong(KEY_SNOOZED_AT, 0L)
         if (snoozedVersion == latest.version && System.currentTimeMillis() - snoozedAt < SNOOZE_MS) {
-            return@withContext null
+            return@withContext Outcome.None
         }
         prefs.edit().putString(KEY_NOTIFIED_VERSION, latest.version).apply()
-        latest
+        Outcome.Available(latest)
     }
 
     fun rememberLater(context: Context) {
