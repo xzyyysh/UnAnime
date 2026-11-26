@@ -174,40 +174,59 @@ private fun TitleContent(
                         .fillMaxSize()
                         .padding(start = Spacing.lg, end = Spacing.lg)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .weight(0.42f)
-                            .fillMaxHeight()
-                            .verticalScroll(infoScroll)
-                            .padding(end = Spacing.xl, bottom = BottomClearance)
-                    ) {
-                        playback?.let { pb ->
-                            MoviePlayerSurface(
-                                playback = pb,
-                                modifier = Modifier.padding(bottom = Spacing.md + bottomGap)
+                    if (data.type == "movie") {
+                        Box(
+                            modifier = Modifier
+                                .weight(0.56f)
+                                .fillMaxHeight()
+                                .padding(end = Spacing.xl, bottom = BottomClearance),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            playback?.let { pb -> MoviePlayerSurface(playback = pb) }
+                        }
+                        Column(
+                            modifier = Modifier
+                                .weight(0.44f)
+                                .fillMaxHeight()
+                                .verticalScroll(infoScroll)
+                                .padding(bottom = BottomClearance)
+                        ) {
+                            TitleInfo(
+                                data = data,
+                                posterWidth = 176.dp,
+                                onArtworkClick = { previewArtwork = true }
                             )
                         }
-                        TitleInfo(
-                            data = data,
-                            posterWidth = 176.dp,
-                            onArtworkClick = { previewArtwork = true }
-                        )
-                    }
-                    Column(
-                        modifier = Modifier
-                            .weight(0.58f)
-                            .fillMaxHeight()
-                            .verticalScroll(episodesScroll)
-                            .padding(bottom = BottomClearance)
-                    ) {
-                        if (data.seasons.isNotEmpty()) {
-                            EpisodesSection(
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .weight(0.42f)
+                                .fillMaxHeight()
+                                .verticalScroll(infoScroll)
+                                .padding(end = Spacing.xl, bottom = BottomClearance)
+                        ) {
+                            TitleInfo(
                                 data = data,
-                                selectedSeason = activeSeason,
-                                onSeasonSelect = onSeasonSelect,
-                                onEpisodeClick = onEpisodeClick,
-                                modifier = Modifier.padding(top = Spacing.sm)
+                                posterWidth = 176.dp,
+                                onArtworkClick = { previewArtwork = true }
                             )
+                        }
+                        Column(
+                            modifier = Modifier
+                                .weight(0.58f)
+                                .fillMaxHeight()
+                                .verticalScroll(episodesScroll)
+                                .padding(bottom = BottomClearance)
+                        ) {
+                            if (data.seasons.isNotEmpty()) {
+                                EpisodesSection(
+                                    data = data,
+                                    selectedSeason = activeSeason,
+                                    onSeasonSelect = onSeasonSelect,
+                                    onEpisodeClick = onEpisodeClick,
+                                    modifier = Modifier.padding(top = Spacing.sm)
+                                )
+                            }
                         }
                     }
                 }
