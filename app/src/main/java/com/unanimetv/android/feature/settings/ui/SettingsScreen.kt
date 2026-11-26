@@ -234,6 +234,34 @@ private fun AppearanceCard(
                 )
             }
             Spacer(modifier = Modifier.height(Spacing.md))
+            ThemeDropdown(
+                label = "Modo",
+                selected = when (settings.mode) {
+                    ThemeMode.SYSTEM -> "Sistema"
+                    ThemeMode.LIGHT -> "Claro"
+                    ThemeMode.DARK -> "Oscuro"
+                },
+                options = listOf("Sistema", "Claro", "Oscuro"),
+                onSelect = { option ->
+                    onModeChange(
+                        when (option) {
+                            "Claro" -> ThemeMode.LIGHT
+                            "Oscuro" -> ThemeMode.DARK
+                            else -> ThemeMode.SYSTEM
+                        }
+                    )
+                }
+            )
+            Spacer(modifier = Modifier.height(Spacing.md))
+            ThemeDropdown(
+                label = "Estilo de tema",
+                selected = settings.style.label,
+                options = ThemeStyle.entries.map { it.label },
+                onSelect = { option ->
+                    onStyleChange(ThemeStyle.entries.first { it.label == option })
+                }
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.md))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -276,34 +304,6 @@ private fun AppearanceCard(
                     onCheckedChange = onAmoledChange
                 )
             }
-            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.md))
-            ThemeDropdown(
-                label = "Modo",
-                selected = when (settings.mode) {
-                    ThemeMode.SYSTEM -> "Sistema"
-                    ThemeMode.LIGHT -> "Claro"
-                    ThemeMode.DARK -> "Oscuro"
-                },
-                options = listOf("Sistema", "Claro", "Oscuro"),
-                onSelect = { option ->
-                    onModeChange(
-                        when (option) {
-                            "Claro" -> ThemeMode.LIGHT
-                            "Oscuro" -> ThemeMode.DARK
-                            else -> ThemeMode.SYSTEM
-                        }
-                    )
-                }
-            )
-            Spacer(modifier = Modifier.height(Spacing.md))
-            ThemeDropdown(
-                label = "Estilo de tema",
-                selected = settings.style.label,
-                options = ThemeStyle.entries.map { it.label },
-                onSelect = { option ->
-                    onStyleChange(ThemeStyle.entries.first { it.label == option })
-                }
-            )
         }
     }
 }
