@@ -25,6 +25,10 @@ object StreamResolvers {
         "anonstream.co" to "untested"
     )
 
+    private val skippedHostPatterns: List<Pair<Regex, String>> = listOf(
+        Regex("filemoo?n", RegexOption.IGNORE_CASE) to "Requiere JavaScript"
+    )
+
     fun hostOf(url: String): String? = try {
         URI(url).host?.lowercase()
     } catch (_: Exception) {
@@ -40,5 +44,9 @@ object StreamResolvers {
         return resolver(url)
     }
 
-    fun skipReasonFor(url: String): String? = hostOf(url)?.let { skippedHosts[it] }
+    fun skipReasonFor(url: String): String? {
+        val host = hostOf(url) ?: return null
+        skippedHosts[host]?.let { return it }
+        return skippedHostPatterns.firstOrNull { it.first.containsMatchIn(host) }?.second
+    }
 }
