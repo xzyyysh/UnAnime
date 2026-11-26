@@ -1,5 +1,6 @@
 package com.unanimetv.android.core.designsystem.theme
 
+import android.app.Activity
 import android.os.Build
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -12,13 +13,17 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.graphics.lerp
+import androidx.core.view.WindowCompat
 import kotlinx.coroutines.launch
 
 private val LightColorScheme = lightColorScheme(
@@ -140,6 +145,17 @@ fun UnAnimeTheme(
     }
     var current by remember { mutableStateOf(target) }
     val fraction = remember { Animatable(1f) }
+    LocalConfiguration.current
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
+            }
+        }
+    }
     LaunchedEffect(target) {
         val from = current
         if (from == target) return@LaunchedEffect
