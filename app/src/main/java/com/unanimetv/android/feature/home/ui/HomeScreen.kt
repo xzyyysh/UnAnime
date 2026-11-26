@@ -74,8 +74,6 @@ fun HomeScreen(
     onEpisodeClick: (String) -> Unit,
     onTitleClick: (String) -> Unit = {},
     onSeeAll: (String, String) -> Unit = { _, _ -> },
-    onFavoritesClick: () -> Unit = {},
-    onHistoryClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val viewModel: HomeViewModel = viewModel()
@@ -118,8 +116,6 @@ fun HomeScreen(
             onEpisodeClick = onEpisodeClick,
             onTitleClick = onTitleClick,
             onSeeAll = onSeeAll,
-            onFavoritesClick = onFavoritesClick,
-            onHistoryClick = onHistoryClick,
             modifier = modifier
         )
     }
@@ -131,8 +127,6 @@ private fun HomeContent(
     onEpisodeClick: (String) -> Unit,
     onTitleClick: (String) -> Unit,
     onSeeAll: (String, String) -> Unit,
-    onFavoritesClick: () -> Unit,
-    onHistoryClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val meta = uiState.sectionMeta
@@ -153,9 +147,6 @@ private fun HomeContent(
         logoVariant = logoVariant,
         collapseProgress = { collapseProgress },
         onTitleClick = onTitleClick,
-        onCatalogClick = onSeeAll,
-        onFavoritesClick = onFavoritesClick,
-        onHistoryClick = onHistoryClick,
         modifier = modifier
     ) {
         HomeGrid(

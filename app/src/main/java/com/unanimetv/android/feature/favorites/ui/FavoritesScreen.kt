@@ -38,6 +38,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
@@ -56,6 +57,8 @@ import coil3.compose.AsyncImage
 import com.unanimetv.android.R
 import com.unanimetv.android.core.designsystem.component.EmptyState
 import com.unanimetv.android.core.designsystem.tokens.Spacing
+import com.unanimetv.android.ui.LocalAppDrawerState
+import kotlinx.coroutines.launch
 import com.unanimetv.android.core.favorites.FavoriteAnime
 import com.unanimetv.android.core.favorites.FavoriteEpisode
 import com.unanimetv.android.core.favorites.FavoritesStore
@@ -91,10 +94,19 @@ fun FavoritesScreen(
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.md, vertical = Spacing.sm)
             ) {
+                val drawerState = LocalAppDrawerState.current
+                val scope = rememberCoroutineScope()
                 IconButton(onClick = onBack) {
                     Icon(
                         painter = painterResource(R.drawable.ic_tabler_arrow_back),
                         contentDescription = "Volver",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                IconButton(onClick = { drawerState?.let { scope.launch { it.open() } } }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_tabler_menu_2),
+                        contentDescription = "Menú",
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }

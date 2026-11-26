@@ -25,11 +25,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,102 +48,126 @@ import com.unanimetv.android.core.designsystem.tokens.Spacing
 import com.unanimetv.android.feature.search.ui.SearchDialog
 import kotlinx.coroutines.launch
 
+val LocalAppDrawerState = compositionLocalOf<DrawerState?> { null }
+
+@Composable
+fun AppDrawerScaffold(
+    selectedPath: String?,
+    onCatalogClick: (String, String) -> Unit,
+    onFavoritesClick: () -> Unit = {},
+    onHistoryClick: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit
+) {
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val logoVariant = rememberNotAnimeLogoVariant()
+    val scope = rememberCoroutineScope()
+    val configuration = LocalConfiguration.current
+    val isWideScreen = configuration.screenWidthDp >= 600 ||
+        configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    androidx.compose.runtime.CompositionLocalProvider(LocalAppDrawerState provides drawerState) {
+        if (isWideScreen) {
+            Row(modifier = modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(0.4f)
+                        .background(MaterialTheme.colorScheme.background)
+                        .statusBarsPadding()
+                ) {
+                    DrawerContent(
+                        logoVariant = logoVariant,
+                        selectedPath = selectedPath,
+                        onCatalogClick = onCatalogClick,
+                        onFavoritesClick = onFavoritesClick,
+                        onHistoryClick = onHistoryClick
+                    )
+                }
+                VerticalDivider()
+                Box(modifier = Modifier.weight(1f)) {
+                    content()
+                }
+            }
+        } else {
+            ModalNavigationDrawer(
+                drawerState = drawerState,
+                drawerContent = {
+                    AppDrawer(
+                        logoVariant = logoVariant,
+                        selectedPath = selectedPath,
+                        onCatalogClick = { path, title ->
+                            scope.launch { drawerState.close() }
+                            onCatalogClick(path, title)
+                        },
+                        onFavoritesClick = {
+                            scope.launch { drawerState.close() }
+                            onFavoritesClick()
+                        },
+                        onHistoryClick = {
+                            scope.launch { drawerState.close() }
+                            onHistoryClick()
+                        }
+                    )
+                }
+            ) {
+                Box(modifier = modifier.fillMaxSize()) {
+                    content()
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun AppChrome(
     logoVariant: MutableIntState,
     collapseProgress: () -> Float,
     onTitleClick: (String) -> Unit,
-    onCatalogClick: (String, String) -> Unit,
-    onFavoritesClick: () -> Unit = {},
-    onHistoryClick: () -> Unit = {},
-    selectedPath: String? = null,
     modifier: Modifier = Modifier,
     alwaysSolid: Boolean = false,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val drawerState = androidx.compose.material3.rememberDrawerState(androidx.compose.material3.DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
     var searchOpen by remember { mutableStateOf(false) }
+    val drawerState = LocalAppDrawerState.current
+    val scope = rememberCoroutineScope()
 
     val configuration = LocalConfiguration.current
     val isWideScreen = configuration.screenWidthDp >= 600 ||
         configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    if (isWideScreen) {
-        Row(modifier = modifier.fillMaxSize()) {
-            Box(
+    Box(modifier = modifier.fillMaxSize()) {
+        content()
+        if (isWideScreen) {
+            IconButton(
+                onClick = { searchOpen = true },
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(0.4f)
-                    .background(MaterialTheme.colorScheme.background)
+                    .align(Alignment.TopEnd)
                     .statusBarsPadding()
+                    .padding(horizontal = Spacing.xs, vertical = Spacing.xs)
             ) {
-                DrawerContent(
-                    logoVariant = logoVariant,
-                    selectedPath = selectedPath,
-                    onCatalogClick = onCatalogClick,
-                    onFavoritesClick = onFavoritesClick,
-                    onHistoryClick = onHistoryClick
-                )
-            }
-            VerticalDivider()
-            Box(modifier = Modifier.weight(1f)) {
-                content()
-                IconButton(
-                    onClick = { searchOpen = true },
+                Box(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .statusBarsPadding()
-                        .padding(horizontal = Spacing.xs, vertical = Spacing.xs)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_tabler_search),
-                            contentDescription = "Buscar",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    Icon(
+                        painter = painterResource(R.drawable.ic_tabler_search),
+                        contentDescription = "Buscar",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
-        }
-    } else {
-        ModalNavigationDrawer(
-            drawerState = drawerState,
-            drawerContent = {
-                AppDrawer(
-                    logoVariant = logoVariant,
-                    selectedPath = selectedPath,
-                    onCatalogClick = { path, title ->
-                        scope.launch { drawerState.close() }
-                        onCatalogClick(path, title)
-                    },
-                    onFavoritesClick = {
-                        scope.launch { drawerState.close() }
-                        onFavoritesClick()
-                    },
-                    onHistoryClick = {
-                        scope.launch { drawerState.close() }
-                        onHistoryClick()
-                    }
-                )
-            }
-        ) {
-            Box(modifier = modifier.fillMaxSize()) {
-                content()
-                ChromeTopBar(
-                    collapseProgress = collapseProgress,
-                    alwaysSolid = alwaysSolid,
-                    logoVariant = logoVariant,
-                    onMenuClick = { scope.launch { drawerState.open() } },
-                    onSearchClick = { searchOpen = true }
-                )
-            }
+        } else {
+            ChromeTopBar(
+                collapseProgress = collapseProgress,
+                alwaysSolid = alwaysSolid,
+                logoVariant = logoVariant,
+                onMenuClick = { drawerState?.let { scope.launch { it.open() } } },
+                onSearchClick = { searchOpen = true }
+            )
         }
     }
     if (searchOpen) {

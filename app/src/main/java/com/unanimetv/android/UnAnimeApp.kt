@@ -38,8 +38,12 @@ import androidx.navigation.compose.rememberNavController
 import com.unanimetv.android.core.designsystem.tokens.Spacing
 import com.unanimetv.android.core.network.CloudflareGate
 import com.unanimetv.android.R
+import com.unanimetv.android.core.navigation.FAVORITES_ROUTE
+import com.unanimetv.android.core.navigation.HISTORY_ROUTE
 import com.unanimetv.android.core.navigation.TopLevelDestination
 import com.unanimetv.android.core.navigation.UnAnimeNavHost
+import com.unanimetv.android.core.navigation.catalogRoute
+import com.unanimetv.android.ui.AppDrawerScaffold
 import com.unanimetv.android.core.update.UpdateChecker
 import com.unanimetv.android.ui.GateDialog
 import com.unanimetv.android.ui.UpdateDialog
@@ -64,7 +68,17 @@ fun UnAnimeApp() {
     val updateDownload by UpdateChecker.download.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        UnAnimeNavHost(navController, modifier = Modifier.fillMaxSize())
+        AppDrawerScaffold(
+            selectedPath = backStackEntry?.arguments?.getString("url").takeIf {
+                currentRoute?.startsWith("catalog?") == true
+            },
+            onCatalogClick = { path, title -> navigateTo(navController, catalogRoute(path, title)) },
+            onFavoritesClick = { navigateTo(navController, FAVORITES_ROUTE) },
+            onHistoryClick = { navigateTo(navController, HISTORY_ROUTE) },
+            modifier = Modifier.fillMaxSize()
+        ) {
+            UnAnimeNavHost(navController, modifier = Modifier.fillMaxSize())
+        }
         if (!playerFullscreen) {
             FloatingBar(
                 currentRoute = activeRoute,

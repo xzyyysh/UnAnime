@@ -37,9 +37,6 @@ fun CatalogScreen(
     path: String,
     title: String,
     onTitleClick: (String) -> Unit,
-    onCatalogClick: (String, String) -> Unit,
-    onFavoritesClick: () -> Unit,
-    onHistoryClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val viewModel: CatalogViewModel = viewModel()
@@ -67,10 +64,6 @@ fun CatalogScreen(
         collapseProgress = { 1f },
         alwaysSolid = true,
         onTitleClick = onTitleClick,
-        onCatalogClick = onCatalogClick,
-        onFavoritesClick = onFavoritesClick,
-        onHistoryClick = onHistoryClick,
-        selectedPath = path,
         modifier = modifier
     ) {
         when {

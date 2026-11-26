@@ -18,12 +18,12 @@ import com.unanimetv.android.feature.title.ui.TitleScreen
 private const val EPISODE_ROUTE = "episode?url={url}"
 private const val TITLE_ROUTE = "title?url={url}"
 private const val CATALOG_ROUTE = "catalog?url={url}&title={title}"
-private const val FAVORITES_ROUTE = "favorites"
-private const val HISTORY_ROUTE = "history"
+const val FAVORITES_ROUTE = "favorites"
+const val HISTORY_ROUTE = "history"
 
 private fun episodeRoute(url: String) = "episode?url=${Uri.encode(url)}"
 private fun titleRoute(url: String) = "title?url=${Uri.encode(url)}"
-private fun catalogRoute(url: String, title: String) =
+fun catalogRoute(url: String, title: String) =
     "catalog?url=${Uri.encode(url)}&title=${Uri.encode(title)}"
 
 @Composable
@@ -64,9 +64,7 @@ fun UnAnimeNavHost(
             HomeScreen(
                 onEpisodeClick = { navController.navigate(episodeRoute(it)) },
                 onTitleClick = { navController.navigate(titleRoute(it)) },
-                onSeeAll = { url, title -> navController.navigate(catalogRoute(url, title)) },
-                onFavoritesClick = { navController.navigate(FAVORITES_ROUTE) },
-                onHistoryClick = { navController.navigate(HISTORY_ROUTE) }
+                onSeeAll = { url, title -> navController.navigate(catalogRoute(url, title)) }
             )
         }
         composable(TopLevelDestination.SETTINGS.route) {
@@ -92,10 +90,7 @@ fun UnAnimeNavHost(
             CatalogScreen(
                 path = url,
                 title = title,
-                onTitleClick = { navController.navigate(titleRoute(it)) },
-                onCatalogClick = { url2, title2 -> navController.navigate(catalogRoute(url2, title2)) },
-                onFavoritesClick = { navController.navigate(FAVORITES_ROUTE) },
-                onHistoryClick = { navController.navigate(HISTORY_ROUTE) }
+                onTitleClick = { navController.navigate(titleRoute(it)) }
             )
         }
         composable(TITLE_ROUTE) { entry ->
