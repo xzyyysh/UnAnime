@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.aspectRatio
@@ -41,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
@@ -120,7 +122,8 @@ private fun TitleContent(
     val favorites by FavoritesStore.favorites.collectAsState()
     val isFavorite = favorites.any { it.url == data.url }
     val configuration = LocalConfiguration.current
-    val wide = configuration.screenWidthDp >= 600 && configuration.screenHeightDp >= 480
+    val wide = configuration.screenWidthDp >= 600 ||
+        configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val season = data.seasons.firstOrNull { it.season == selectedSeason } ?: data.seasons.firstOrNull()
     val activeSeason = season?.season ?: 0
     var previewArtwork by remember { mutableStateOf(false) }
@@ -134,6 +137,7 @@ private fun TitleContent(
         null
     }
     val bottomGap = (LocalConfiguration.current.screenHeightDp * 0.012f).dp
+    val surfaceDrop = (configuration.screenHeightDp * 0.017f).dp
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -192,7 +196,12 @@ private fun TitleContent(
                                 .padding(end = Spacing.xl, bottom = BottomClearance),
                             contentAlignment = Alignment.Center
                         ) {
-                            playback?.let { pb -> MoviePlayerSurface(playback = pb) }
+                            playback?.let { pb ->
+                                MoviePlayerSurface(
+                                    playback = pb,
+                                    modifier = Modifier.offset(y = surfaceDrop)
+                                )
+                            }
                         }
                         Column(
                             modifier = Modifier

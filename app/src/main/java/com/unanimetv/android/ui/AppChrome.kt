@@ -57,6 +57,7 @@ fun AppDrawerScaffold(
     onFavoritesClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
     modifier: Modifier = Modifier,
+    drawerEnabled: Boolean = true,
     content: @Composable BoxScope.() -> Unit
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -66,8 +67,14 @@ fun AppDrawerScaffold(
     val isWideScreen = configuration.screenWidthDp >= 600 ||
         configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    androidx.compose.runtime.CompositionLocalProvider(LocalAppDrawerState provides drawerState) {
-        if (isWideScreen) {
+    androidx.compose.runtime.CompositionLocalProvider(
+        LocalAppDrawerState provides drawerState.takeIf { drawerEnabled }
+    ) {
+        if (!drawerEnabled) {
+            Box(modifier = modifier.fillMaxSize()) {
+                content()
+            }
+        } else if (isWideScreen) {
             Row(modifier = modifier.fillMaxSize()) {
                 Box(
                     modifier = Modifier

@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -215,7 +216,8 @@ private fun EpisodeContent(
     val configuration = LocalConfiguration.current
     val topInset = (configuration.screenHeightDp * 0.015f).dp
     val bottomGap = (configuration.screenHeightDp * 0.012f).dp
-    val wide = configuration.screenWidthDp >= 600 && configuration.screenHeightDp >= 480
+    val wide = configuration.screenWidthDp >= 600 ||
+        configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     val playerSlot = remember {
         movableContentOf<PlayerSlotArgs> { args ->

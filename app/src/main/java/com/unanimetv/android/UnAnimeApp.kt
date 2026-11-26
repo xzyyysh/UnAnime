@@ -61,6 +61,10 @@ fun UnAnimeApp() {
             currentRoute.startsWith("title?") ||
             currentRoute.startsWith("episode?")
         )
+    val isDrawerLocked = currentRoute != null && (
+        currentRoute.startsWith("title?") ||
+            currentRoute.startsWith("episode?")
+        )
     val activeRoute = if (isSubpage) TopLevelDestination.HOME.route else currentRoute
     val playerFullscreen by com.unanimetv.android.core.playback.PlayerFullscreen.active.collectAsState()
     val context = LocalContext.current
@@ -75,6 +79,7 @@ fun UnAnimeApp() {
             onCatalogClick = { path, title -> navigateTo(navController, catalogRoute(path, title)) },
             onFavoritesClick = { navigateTo(navController, FAVORITES_ROUTE) },
             onHistoryClick = { navigateTo(navController, HISTORY_ROUTE) },
+            drawerEnabled = !isDrawerLocked,
             modifier = Modifier.fillMaxSize()
         ) {
             UnAnimeNavHost(navController, modifier = Modifier.fillMaxSize())
