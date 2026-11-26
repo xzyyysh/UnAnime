@@ -39,6 +39,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -62,9 +63,12 @@ import com.notanime.es.scraper.TitleData
 import com.unanimetv.android.R
 import com.unanimetv.android.core.favorites.FavoriteAnime
 import com.unanimetv.android.core.favorites.FavoritesStore
+import com.unanimetv.android.core.designsystem.component.CompactProgress
 import com.unanimetv.android.core.designsystem.component.EmptyState
 import com.unanimetv.android.core.designsystem.component.LoadingState
 import com.unanimetv.android.core.designsystem.component.StatusBadge
+import com.unanimetv.android.core.history.HistoryStore
+import com.unanimetv.android.core.playback.PlaybackStore
 import com.unanimetv.android.core.designsystem.tokens.Spacing
 import com.unanimetv.android.core.media.ui.ScreenshotGallery
 import com.unanimetv.android.core.media.ui.ScreenshotPreview
@@ -572,6 +576,7 @@ private fun EpisodesSection(
     onEpisodeClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val progressMap by PlaybackStore.progress.collectAsState()
     Column(modifier = modifier.padding(top = Spacing.xl)) {
         Text(
             text = "Temporadas y episodios",
@@ -597,8 +602,10 @@ private fun EpisodesSection(
         val season = data.seasons.firstOrNull { it.season == selectedSeason }
             ?: data.seasons.firstOrNull()
         season?.episodes?.forEachIndexed { index, episode ->
+            val p = progressMap[episode.url]
             EpisodeRow(
                 episode = episode,
+                progress = p?.takeIf { it.fraction > 0f }?.fraction,
                 onClick = { onEpisodeClick(episode.url) },
                 modifier = if (index > 0) Modifier.padding(top = Spacing.sm) else Modifier.padding(top = Spacing.lg)
             )
@@ -609,6 +616,7 @@ private fun EpisodesSection(
 @Composable
 private fun EpisodeRow(
     episode: com.notanime.es.scraper.EpisodeEntry,
+    progress: Float?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -651,6 +659,12 @@ private fun EpisodeRow(
                     text = date,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (progress != null && progress > 0f) {
+                CompactProgress(
+                    fraction = progress,
+                    modifier = Modifier.padding(top = Spacing.xs)
                 )
             }
         }

@@ -9,6 +9,8 @@ import com.notanime.es.scraper.SourceServer
 import com.notanime.es.extractor.WebViewRequiredException
 import com.unanimetv.android.core.playback.ui.LanguageGroup
 import com.unanimetv.android.core.network.ApiClient
+import com.unanimetv.android.core.history.HistoryEntry
+import com.unanimetv.android.core.history.HistoryStore
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -145,6 +147,18 @@ class EpisodeViewModel(
                     .flatMap { it.episodes }
                     .firstOrNull { it.url == currentUrl }
                 val entryTitle = entry?.title?.takeIf { it.isNotEmpty() }
+                HistoryStore.record(
+                    HistoryEntry(
+                        url = currentUrl,
+                        type = "episode",
+                        title = entryTitle ?: episode.title.orEmpty(),
+                        image = episode.image ?: entry?.image.orEmpty(),
+                        animeTitle = episode.title?.substringBefore(" - ")?.takeIf { it.isNotBlank() },
+                        animeUrl = episode.nav.titleUrl,
+                        label = entry?.let { "${it.season} - ${it.episode}" },
+                        watchedAt = System.currentTimeMillis()
+                    )
+                )
                 _uiState.value = EpisodeUiState(
                     isLoading = false,
                     url = currentUrl,

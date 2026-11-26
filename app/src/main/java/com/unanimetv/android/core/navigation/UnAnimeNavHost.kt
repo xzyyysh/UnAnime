@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import com.unanimetv.android.feature.catalog.ui.CatalogScreen
 import com.unanimetv.android.feature.episode.ui.EpisodeScreen
 import com.unanimetv.android.feature.favorites.ui.FavoritesScreen
+import com.unanimetv.android.feature.history.ui.HistoryScreen
 import com.unanimetv.android.feature.home.ui.HomeScreen
 import com.unanimetv.android.feature.settings.ui.SettingsScreen
 import com.unanimetv.android.feature.title.ui.TitleScreen
@@ -18,6 +19,7 @@ private const val EPISODE_ROUTE = "episode?url={url}"
 private const val TITLE_ROUTE = "title?url={url}"
 private const val CATALOG_ROUTE = "catalog?url={url}&title={title}"
 private const val FAVORITES_ROUTE = "favorites"
+private const val HISTORY_ROUTE = "history"
 
 private fun episodeRoute(url: String) = "episode?url=${Uri.encode(url)}"
 private fun titleRoute(url: String) = "title?url=${Uri.encode(url)}"
@@ -63,7 +65,8 @@ fun UnAnimeNavHost(
                 onEpisodeClick = { navController.navigate(episodeRoute(it)) },
                 onTitleClick = { navController.navigate(titleRoute(it)) },
                 onSeeAll = { url, title -> navController.navigate(catalogRoute(url, title)) },
-                onFavoritesClick = { navController.navigate(FAVORITES_ROUTE) }
+                onFavoritesClick = { navController.navigate(FAVORITES_ROUTE) },
+                onHistoryClick = { navController.navigate(HISTORY_ROUTE) }
             )
         }
         composable(TopLevelDestination.SETTINGS.route) {
@@ -71,6 +74,13 @@ fun UnAnimeNavHost(
         }
         composable(FAVORITES_ROUTE) {
             FavoritesScreen(
+                onTitleClick = { navController.navigate(titleRoute(it)) },
+                onEpisodeClick = { navController.navigate(episodeRoute(it)) },
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(HISTORY_ROUTE) {
+            HistoryScreen(
                 onTitleClick = { navController.navigate(titleRoute(it)) },
                 onEpisodeClick = { navController.navigate(episodeRoute(it)) },
                 onBack = { navController.popBackStack() }
@@ -84,7 +94,8 @@ fun UnAnimeNavHost(
                 title = title,
                 onTitleClick = { navController.navigate(titleRoute(it)) },
                 onCatalogClick = { url2, title2 -> navController.navigate(catalogRoute(url2, title2)) },
-                onFavoritesClick = { navController.navigate(FAVORITES_ROUTE) }
+                onFavoritesClick = { navController.navigate(FAVORITES_ROUTE) },
+                onHistoryClick = { navController.navigate(HISTORY_ROUTE) }
             )
         }
         composable(TITLE_ROUTE) { entry ->

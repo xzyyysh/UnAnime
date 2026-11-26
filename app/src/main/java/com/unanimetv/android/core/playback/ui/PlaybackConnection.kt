@@ -68,6 +68,10 @@ fun rememberMediaController(
                     else -> "unknown"
                 }
                 UnAnimeLog.d("player", "state=$name")
+                if (state == Player.STATE_READY) {
+                    val duration = c.duration
+                    if (duration > 0) PlaybackStore.putDuration(urlState, duration)
+                }
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {

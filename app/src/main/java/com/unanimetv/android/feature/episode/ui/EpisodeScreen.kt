@@ -61,6 +61,7 @@ import com.notanime.es.scraper.SeasonEpisodes
 import com.notanime.es.scraper.SourceServer
 import com.notanime.es.util.UnAnimeLog
 import com.unanimetv.android.R
+import com.unanimetv.android.core.designsystem.component.CompactProgress
 import com.unanimetv.android.core.designsystem.component.EmptyState
 import com.unanimetv.android.core.designsystem.component.LoadingState
 import com.unanimetv.android.core.designsystem.tokens.Spacing
@@ -147,6 +148,17 @@ private fun EpisodeContent(
     val controller = rememberMediaController(uiState.url) { if (it) started = true }
 
     val stream = uiState.selectedServer?.stream
+
+    LaunchedEffect(controller, uiState.url) {
+        val c = controller ?: return@LaunchedEffect
+        val url = uiState.url
+        while (true) {
+            kotlinx.coroutines.delay(5_000)
+            if (c.isPlaying && c.currentMediaItem != null) {
+                PlaybackStore.put(url, c.currentPosition)
+            }
+        }
+    }
     val qualities = stream?.qualities.orEmpty()
     val safeQualityIndex = qualityIndex.coerceIn(0, (qualities.size - 1).coerceAtLeast(0))
     val qualityUrl = qualities.getOrNull(safeQualityIndex)?.url ?: qualities.firstOrNull()?.url
@@ -480,6 +492,7 @@ private fun EpisodeList(
     onOpenEpisode: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val progressMap by PlaybackStore.progress.collectAsState()
     Column(modifier = modifier.fillMaxWidth()) {
         seasons.forEach { season ->
             Text(
@@ -492,6 +505,7 @@ private fun EpisodeList(
                 EpisodeRow(
                     episode = episode,
                     current = episode.url == currentUrl,
+                    progress = progressMap[episode.url]?.takeIf { it.fraction > 0f && it.url != currentUrl }?.fraction,
                     onClick = { onOpenEpisode(episode.url) },
                     modifier = Modifier.padding(top = Spacing.sm)
                 )
@@ -504,6 +518,7 @@ private fun EpisodeList(
 private fun EpisodeRow(
     episode: EpisodeEntry,
     current: Boolean,
+    progress: Float?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -560,12 +575,24 @@ private fun EpisodeRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            if (progress != null) {
+                CompactProgress(
+                    fraction = progress,
+                    modifier = Modifier.padding(top = Spacing.xs)
+                )
+            }
         }
         if (current) {
             Icon(
                 painter = painterResource(R.drawable.ic_tabler_player_play),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        } else if (progress != null) {
+            Text(
+                text = "${(progress * 100).toInt()}%",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
@@ -585,21 +612,35 @@ private fun EpisodeNavBar(
     onTitleClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val progressMap by PlaybackStore.progress.collectAsState()
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        Button(
-            onClick = { prevUrl?.let(onOpenEpisode) },
-            enabled = prevUrl != null,
-            colors = ButtonDefaults.outlinedButtonColors()
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_tabler_chevron_left),
-                contentDescription = null
-            )
-            Text("Anterior")
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Button(
+                onClick = { prevUrl?.let(onOpenEpisode) },
+                enabled = prevUrl != null,
+                colors = ButtonDefaults.outlinedButtonColors()
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_tabler_chevron_left),
+                    contentDescription = null
+                )
+                Text("Anterior")
+            }
+            prevUrl?.let { url ->
+                val p = progressMap[url]?.takeIf { it.fraction > 0f }?.fraction
+                if (p != null) {
+                    CompactProgress(
+                        fraction = p,
+                        modifier = Modifier
+                            .padding(top = Spacing.xs)
+                            .width(120.dp)
+                    )
+                }
+            }
         }
         Spacer(Modifier.width(Spacing.lg))
         IconButton(
@@ -618,16 +659,29 @@ private fun EpisodeNavBar(
             )
         }
         Spacer(Modifier.width(Spacing.lg))
-        Button(
-            onClick = { nextUrl?.let(onOpenEpisode) },
-            enabled = nextUrl != null,
-            colors = ButtonDefaults.outlinedButtonColors()
-        ) {
-            Text("Siguiente")
-            Icon(
-                painter = painterResource(R.drawable.ic_tabler_chevron_right),
-                contentDescription = null
-            )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Button(
+                onClick = { nextUrl?.let(onOpenEpisode) },
+                enabled = nextUrl != null,
+                colors = ButtonDefaults.outlinedButtonColors()
+            ) {
+                Text("Siguiente")
+                Icon(
+                    painter = painterResource(R.drawable.ic_tabler_chevron_right),
+                    contentDescription = null
+                )
+            }
+            nextUrl?.let { url ->
+                val p = progressMap[url]?.takeIf { it.fraction > 0f }?.fraction
+                if (p != null) {
+                    CompactProgress(
+                        fraction = p,
+                        modifier = Modifier
+                            .padding(top = Spacing.xs)
+                            .width(120.dp)
+                    )
+                }
+            }
         }
     }
 }

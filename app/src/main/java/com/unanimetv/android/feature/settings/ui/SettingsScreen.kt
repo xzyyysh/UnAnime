@@ -427,6 +427,8 @@ private fun cacheTargets(context: Context): List<File> {
         File(context.cacheDir, "downloads"),
         File(context.cacheDir, "update"),
         File(context.cacheDir, "captures"),
+        File(context.cacheDir, "history.json"),
+        File(context.cacheDir, "playback_progress.json"),
         File(webView, "Default/Code Cache"),
         File(webView, "Default/GPUCache"),
         File(webView, "GPUCache"),

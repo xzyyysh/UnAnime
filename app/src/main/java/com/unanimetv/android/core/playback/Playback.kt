@@ -12,7 +12,6 @@ import com.notanime.es.util.UnAnimeLog
 import okhttp3.OkHttpClient
 import java.io.File
 import java.util.concurrent.TimeUnit
-
 object CurrentStream {
 
     private const val PLAYER_UA =
@@ -87,27 +86,5 @@ object CurrentStream {
             null,
             cacheKeyFactory
         )
-    }
-}
-
-object PlaybackStore {
-
-    private const val PREFS = "playback_positions"
-    private const val MIN_RESUME_MS = 5_000L
-
-    private lateinit var prefs: android.content.SharedPreferences
-
-    fun init(context: Context) {
-        prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-    }
-
-    fun get(url: String): Long =
-        if (this::prefs.isInitialized) prefs.getLong(url, 0L) else 0L
-
-    fun put(url: String, positionMs: Long) {
-        if (!this::prefs.isInitialized) return
-        val clamped = if (positionMs < MIN_RESUME_MS) 0L else positionMs
-        prefs.edit().putLong(url, clamped).apply()
-        UnAnimeLog.d("store", "saved position ${clamped}ms for ${url.substringAfterLast('/')}")
     }
 }

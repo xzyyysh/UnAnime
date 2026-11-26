@@ -51,6 +51,7 @@ fun AppChrome(
     onTitleClick: (String) -> Unit,
     onCatalogClick: (String, String) -> Unit,
     onFavoritesClick: () -> Unit = {},
+    onHistoryClick: () -> Unit = {},
     selectedPath: String? = null,
     modifier: Modifier = Modifier,
     alwaysSolid: Boolean = false,
@@ -77,7 +78,8 @@ fun AppChrome(
                     logoVariant = logoVariant,
                     selectedPath = selectedPath,
                     onCatalogClick = onCatalogClick,
-                    onFavoritesClick = onFavoritesClick
+                    onFavoritesClick = onFavoritesClick,
+                    onHistoryClick = onHistoryClick
                 )
             }
             VerticalDivider()
@@ -120,6 +122,10 @@ fun AppChrome(
                     onFavoritesClick = {
                         scope.launch { drawerState.close() }
                         onFavoritesClick()
+                    },
+                    onHistoryClick = {
+                        scope.launch { drawerState.close() }
+                        onHistoryClick()
                     }
                 )
             }
@@ -245,7 +251,8 @@ private fun AppDrawer(
     logoVariant: MutableIntState,
     selectedPath: String?,
     onCatalogClick: (String, String) -> Unit,
-    onFavoritesClick: () -> Unit
+    onFavoritesClick: () -> Unit,
+    onHistoryClick: () -> Unit
 ) {
     ModalDrawerSheet(
         drawerContainerColor = MaterialTheme.colorScheme.background
@@ -254,7 +261,8 @@ private fun AppDrawer(
             logoVariant = logoVariant,
             selectedPath = selectedPath,
             onCatalogClick = onCatalogClick,
-            onFavoritesClick = onFavoritesClick
+            onFavoritesClick = onFavoritesClick,
+            onHistoryClick = onHistoryClick
         )
     }
 }
@@ -287,7 +295,8 @@ private fun DrawerContent(
     logoVariant: MutableIntState,
     selectedPath: String?,
     onCatalogClick: (String, String) -> Unit,
-    onFavoritesClick: () -> Unit
+    onFavoritesClick: () -> Unit,
+    onHistoryClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -316,6 +325,12 @@ private fun DrawerContent(
             selected = selectedPath == FavoritesPath,
             onClick = onFavoritesClick
         )
+        NavigationDrawerItem(
+            icon = { Icon(painterResource(R.drawable.ic_tabler_clock), contentDescription = null) },
+            label = { Text("Historial") },
+            selected = selectedPath == HistoryPath,
+            onClick = onHistoryClick
+        )
         HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.sm))
         DrawerSection("Catálogos")
         CatalogEntries.forEach { entry ->
@@ -333,6 +348,7 @@ private fun DrawerContent(
 }
 
 private const val FavoritesPath = "favoritos"
+private const val HistoryPath = "historial"
 
 @Composable
 private fun DrawerItem(

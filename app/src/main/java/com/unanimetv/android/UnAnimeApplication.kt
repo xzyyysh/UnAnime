@@ -27,6 +27,7 @@ class UnAnimeApplication : Application(), SingletonImageLoader.Factory {
         super.onCreate()
         BuildInfo.init(this)
         com.unanimetv.android.core.playback.PlaybackStore.init(this)
+        com.unanimetv.android.core.history.HistoryStore.init(this)
         ThemeController.init(this)
         File(cacheDir, "update").deleteRecursively()
         UpdateChecker.start(this)
