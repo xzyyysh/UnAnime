@@ -17,6 +17,10 @@ object StreamResolvers {
         "hexload.com" to { url -> Hexload.resolve(url) }
     )
 
+    private val resolverPatterns: List<Pair<Regex, suspend (String) -> StreamInfo>> = listOf(
+        Regex("uqload", RegexOption.IGNORE_CASE) to { url -> Uqload.resolve(url) }
+    )
+
     val skippedHosts: Map<String, String> = mapOf(
         "mxdrop.sx" to "captcha-gate",
         "vixeo.io" to "host-down-522",
@@ -35,8 +39,11 @@ object StreamResolvers {
         null
     }
 
-    fun resolverFor(url: String): (suspend (String) -> StreamInfo)? =
-        hostOf(url)?.let { resolvers[it] }
+    fun resolverFor(url: String): (suspend (String) -> StreamInfo)? {
+        val host = hostOf(url) ?: return null
+        resolvers[host]?.let { return it }
+        return resolverPatterns.firstOrNull { it.first.containsMatchIn(host) }?.second
+    }
 
     suspend fun resolveStream(url: String): StreamInfo {
         val resolver = resolverFor(url)

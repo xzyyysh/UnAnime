@@ -16,7 +16,7 @@ object Uqload {
     )
     private val escapeRegex = Regex("\\\\(.)")
     private val masterRegex = Regex("https?:[^\"']+?\\.m3u8[^\"']*")
-    private val fileCodeRegex = Regex("/e/([^/?#]+)")
+    private val fileCodeRegex = Regex("(?:/e/|embed-)([A-Za-z0-9]+)")
 
     private fun unpackPacked(html: String): String? {
         val match = packedRegex.find(html) ?: return null
