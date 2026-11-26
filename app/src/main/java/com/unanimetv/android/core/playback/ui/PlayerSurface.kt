@@ -234,22 +234,6 @@ private fun ServerOptionCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            val detail = server.description.ifEmpty {
-                server.error ?: server.skipReason.orEmpty()
-            }
-            if (detail.isNotEmpty()) {
-                Text(
-                    text = detail,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (selected) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        Color.White.copy(alpha = 0.7f)
-                    },
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
         }
         if (resolving) {
             CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)

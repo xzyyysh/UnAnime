@@ -44,7 +44,7 @@ class EpisodeViewModel(
         resolveJob = viewModelScope.launch {
             try {
                 val resolved = ApiClient.resolveServer(
-                    EmbedServer(name = server.name, lang = server.lang, url = server.url, description = server.description)
+                    EmbedServer(name = server.name, lang = server.lang, url = server.url)
                 )
                 _uiState.update { state ->
                     state.copy(

@@ -15,8 +15,7 @@ data class EmbedServer(
     val name: String,
     val lang: String,
     val url: String,
-    val icon: String = "",
-    val description: String = ""
+    val icon: String = ""
 )
 
 data class EpisodeNav(
@@ -47,12 +46,6 @@ object EpisodeScraper {
 
     private val playerUrlRegex = Regex("go_to_player\\('([^']+)'\\)")
     private val odClassRegex = Regex("\\s+")
-
-    fun cleanDescription(raw: String): String = raw
-        .split("|")
-        .filterNot { it.contains("ventanas emergentes", ignoreCase = true) }
-        .joinToString(" | ")
-        .trim()
 
     fun parseEpisodePage(doc: Document): Triple<Int, String, Pair<List<ServerOption>, EpisodeNav>> {
         val first = doc.selectFirst("li.dooplay_player_option")
@@ -96,14 +89,13 @@ object EpisodeScraper {
             }
             val url = playerUrlRegex.find(el.attr("onclick"))?.groupValues?.get(1)
             val name = el.selectFirst("span")?.text()?.trim().orEmpty()
-            val description = cleanDescription(el.selectFirst("p")?.text()?.trim().orEmpty())
             val icon = el.selectFirst("img")?.attr("src").orEmpty()
             val iconUrl = if (icon.startsWith("http") || icon.isEmpty()) {
                 icon
             } else {
                 runCatching { java.net.URI(embedUrl).resolve(icon).toString() }.getOrDefault(icon)
             }
-            if (url != null) servers.add(EmbedServer(name, lang, url, iconUrl, description))
+            if (url != null) servers.add(EmbedServer(name, lang, url, iconUrl))
         }
         return servers
     }
