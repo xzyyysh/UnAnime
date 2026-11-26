@@ -7,7 +7,6 @@ import com.notanime.es.net.Fetcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import com.notanime.es.util.UnAnimeLog
@@ -35,7 +34,6 @@ object SourcesResolver {
 
     private const val CACHE_TTL_MS = 10 * 60 * 1000L
     private const val CONCURRENCY = 4
-    private const val RETRY_DELAY_MS = 2000L
 
     private val cache = ConcurrentHashMap<String, Pair<Long, List<SourceGroup>>>()
 
@@ -136,20 +134,12 @@ object SourcesResolver {
             base.copy(stream = StreamResolvers.resolveStream(server.url)).also {
                 UnAnimeLog.d("sources", "${server.name} ($host) ok: ${it.stream?.qualities?.size ?: 0} qualities")
             }
-        } catch (first: Exception) {
-            UnAnimeLog.w("sources", "${server.name} ($host) failed, retrying", first)
-            try {
-                delay(RETRY_DELAY_MS)
-                base.copy(stream = StreamResolvers.resolveStream(server.url)).also {
-                    UnAnimeLog.d("sources", "${server.name} ($host) ok on retry: ${it.stream?.qualities?.size ?: 0} qualities")
-                }
-            } catch (e: Exception) {
-                val probed = StreamErrors.probe(server.url)
-                val message = probed ?: e.message ?: e.toString()
-                host?.let { hostErrors[it] = message }
-                UnAnimeLog.e("sources", "${server.name} ($host) failed: $message", e)
-                base.copy(error = message)
-            }
+        } catch (e: Exception) {
+            val probed = StreamErrors.probe(server.url)
+            val message = probed ?: e.message ?: e.toString()
+            host?.let { hostErrors[it] = message }
+            UnAnimeLog.e("sources", "${server.name} ($host) failed: $message", e)
+            base.copy(error = message)
         }
     }
 }
