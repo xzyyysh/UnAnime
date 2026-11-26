@@ -25,7 +25,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -73,6 +72,7 @@ import com.unanimetv.android.ui.LinkMenu
 fun TitleScreen(
     url: String,
     onEpisodeClick: (String) -> Unit,
+    onOpenPlayer: (String) -> Unit,
     onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -80,6 +80,9 @@ fun TitleScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     LaunchedEffect(Unit) { FavoritesStore.init(context) }
+    LaunchedEffect(uiState.data) {
+        if (uiState.data?.type == "movie") onOpenPlayer(url)
+    }
 
     when {
         uiState.isLoading -> LoadingState(modifier = modifier)
@@ -176,8 +179,7 @@ private fun TitleContent(
                     TitleInfo(
                         data = data,
                         posterWidth = 176.dp,
-                        onArtworkClick = { previewArtwork = true },
-                        onPlay = { onEpisodeClick(data.url) }
+                        onArtworkClick = { previewArtwork = true }
                     )
                 }
                 Column(
@@ -207,8 +209,7 @@ private fun TitleContent(
                 TitleInfo(
                     data = data,
                     posterWidth = 120.dp,
-                    onArtworkClick = { previewArtwork = true },
-                    onPlay = { onEpisodeClick(data.url) }
+                    onArtworkClick = { previewArtwork = true }
                 )
                 if (data.seasons.any { it.episodes.isNotEmpty() }) {
                     EpisodesSection(
@@ -236,14 +237,10 @@ private fun TitleInfo(
     data: TitleData,
     posterWidth: Dp,
     onArtworkClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    onPlay: () -> Unit = {}
+    modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Header(data = data, posterWidth = posterWidth, onArtworkClick = onArtworkClick)
-        if (data.type == "movie") {
-            PlayButton(onClick = onPlay, modifier = Modifier.padding(top = Spacing.md))
-        }
         if (data.genres.isNotEmpty()) {
             GenreRow(data = data, modifier = Modifier.padding(top = Spacing.md))
         }
@@ -263,22 +260,6 @@ private fun TitleInfo(
 }
 
 private val BottomClearance = 120.dp
-
-@Composable
-private fun PlayButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Button(
-        onClick = onClick,
-        modifier = modifier,
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_tabler_player_play),
-            contentDescription = null
-        )
-        Spacer(modifier = Modifier.width(Spacing.sm))
-        Text(text = "Reproducir")
-    }
-}
 
 @Composable
 private fun Header(
