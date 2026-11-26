@@ -76,7 +76,8 @@ fun WebViewStreamDialog(
     url: String,
     onStream: (String, String?) -> Unit,
     onDismiss: () -> Unit,
-    onTimeout: () -> Unit = onDismiss
+    onTimeout: () -> Unit = onDismiss,
+    onError: (String) -> Unit = {}
 ) {
     var captured by remember { mutableStateOf(false) }
     var webviewRef by remember { mutableStateOf<WebView?>(null) }
@@ -108,14 +109,21 @@ fun WebViewStreamDialog(
                 }
             }
             webview.evaluateJavascript(
-                "(function(){var v=document.querySelector('video');if(!v)return 'novideo';return (v.src||v.currentSrc||'')+'|'+(v.duration||0);})()"
+                "(function(){var v=document.querySelector('video');var vs=v?(v.src||v.currentSrc||''):'';var d=v?(v.duration||0):0;var t=document.body?document.body.innerText.slice(0,3000):'';return JSON.stringify({src:vs,duration:d,text:t});})()"
             ) { value ->
                 val raw = value?.trim()?.removeSurrounding("\"") ?: return@evaluateJavascript
-                val parts = raw.split("|")
-                val src = parts.getOrNull(0).orEmpty()
-                val duration = parts.getOrNull(1)?.toFloatOrNull() ?: 0f
+                val payload = runCatching {
+                    org.json.JSONObject(raw)
+                }.getOrNull() ?: return@evaluateJavascript
+                val src = payload.optString("src")
+                val duration = payload.optDouble("duration").toFloat()
+                val pageText = payload.optString("text")
                 val elapsed = System.currentTimeMillis() - startedAt
-                if (!captured && src.startsWith("http") && !src.contains("blob:")) {
+                val pageError = com.notanime.es.extractor.StreamErrors.reasonFrom(pageText)
+                if (!captured && pageError != null) {
+                    captured = true
+                    onError(pageError)
+                } else if (!captured && src.startsWith("http") && !src.contains("blob:")) {
                     captured = true
                     onStream(src, null)
                 } else if (!captured && family == "filemoon" && src.isEmpty() && duration <= 0f && elapsed > 15_000) {

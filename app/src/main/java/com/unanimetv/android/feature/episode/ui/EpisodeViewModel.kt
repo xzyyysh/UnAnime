@@ -107,13 +107,17 @@ class EpisodeViewModel(
     }
 
     fun onWebviewTimeout() {
+        onWebviewError("El stream no respondió")
+    }
+
+    fun onWebviewError(message: String) {
         val server = webviewServer
         webviewServer = null
         if (server == null) {
             _uiState.update { it.copy(webviewUrl = null) }
             return
         }
-        val failed = server.copy(error = "El stream no respondió")
+        val failed = server.copy(error = message)
         _uiState.update { state ->
             state.copy(
                 webviewUrl = null,

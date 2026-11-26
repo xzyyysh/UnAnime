@@ -14,6 +14,9 @@ object WebViewStream {
     }
 
     suspend fun resolve(url: String): StreamInfo {
+        if (url.contains("filemoo", ignoreCase = true)) {
+            Filemoon.precheckError(url)?.let { throw IOException(it) }
+        }
         val resolver = interactiveResolver ?: throw WebViewRequiredException(url)
         return resolver(url)
     }
