@@ -151,20 +151,20 @@ private fun AboutCard() {
             Spacer(modifier = Modifier.height(Spacing.sm))
             Text(
                 text = "Versión ${BuildInfo.version}",
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(Spacing.sm))
             Text(
                 text = "Reproductor de anime open source para Android. " +
                     "Explora, busca y mira tus animes favoritos con una interfaz rápida y moderna.",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(Spacing.md))
             Text(
                 text = "Credits: xzyyysh (alias: f3l1x)",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(Spacing.md))
