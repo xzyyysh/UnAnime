@@ -20,5 +20,6 @@ data class EpisodeUiState(
     val selectedServer: SourceServer? = null,
     val resolvingUrl: String? = null,
     val seasons: List<SeasonEpisodes> = emptyList(),
-    val gallery: List<EpisodeScreenshot> = emptyList()
+    val gallery: List<EpisodeScreenshot> = emptyList(),
+    val webviewUrl: String? = null
 )

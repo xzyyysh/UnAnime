@@ -3,6 +3,7 @@ package com.notanime.es.scraper
 import com.notanime.es.extractor.StreamErrors
 import com.notanime.es.extractor.StreamInfo
 import com.notanime.es.extractor.StreamResolvers
+import com.notanime.es.extractor.WebViewRequiredException
 import com.notanime.es.net.Fetcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -134,6 +135,8 @@ object SourcesResolver {
             base.copy(stream = StreamResolvers.resolveStream(server.url)).also {
                 UnAnimeLog.d("sources", "${server.name} ($host) ok: ${it.stream?.qualities?.size ?: 0} qualities")
             }
+        } catch (e: WebViewRequiredException) {
+            throw e
         } catch (e: Exception) {
             val probed = StreamErrors.probe(server.url)
             val message = probed ?: e.message ?: e.toString()

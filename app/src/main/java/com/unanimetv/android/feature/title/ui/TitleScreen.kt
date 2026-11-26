@@ -69,6 +69,7 @@ import com.unanimetv.android.core.designsystem.tokens.Spacing
 import com.unanimetv.android.core.media.ui.ScreenshotGallery
 import com.unanimetv.android.core.media.ui.ScreenshotPreview
 import com.unanimetv.android.core.playback.ui.PlayerVideo
+import com.unanimetv.android.core.playback.ui.WebViewStreamDialog
 import com.unanimetv.android.ui.LinkMenu
 
 @Composable
@@ -306,6 +307,13 @@ private fun TitleContent(
                     initialIndex = index,
                     fileNamePrefix = data.title,
                     onDismiss = { galleryPreview = null }
+                )
+            }
+            pb.uiState.webviewUrl?.let { webviewUrl ->
+                WebViewStreamDialog(
+                    url = webviewUrl,
+                    onStream = { mediaUrl -> pb.onWebviewStream(webviewUrl, mediaUrl) },
+                    onDismiss = pb.onDismissWebview
                 )
             }
         }

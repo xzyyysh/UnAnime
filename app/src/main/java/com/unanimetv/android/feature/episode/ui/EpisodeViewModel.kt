@@ -6,6 +6,7 @@ import com.notanime.es.NotAnimeConfig
 import com.notanime.es.scraper.EmbedServer
 import com.notanime.es.scraper.SeasonEpisodes
 import com.notanime.es.scraper.SourceServer
+import com.notanime.es.extractor.WebViewRequiredException
 import com.unanimetv.android.core.playback.ui.LanguageGroup
 import com.unanimetv.android.core.network.ApiClient
 import kotlinx.coroutines.Job
@@ -25,6 +26,7 @@ class EpisodeViewModel(
     val uiState: StateFlow<EpisodeUiState> = _uiState.asStateFlow()
 
     private var resolveJob: Job? = null
+    private var webviewServer: SourceServer? = null
 
     init {
         load()
@@ -53,6 +55,9 @@ class EpisodeViewModel(
                         resolvingUrl = null
                     )
                 }
+            } catch (e: WebViewRequiredException) {
+                webviewServer = server
+                _uiState.update { it.copy(webviewUrl = server.url, resolvingUrl = null) }
             } catch (e: Exception) {
                 val failed = server.copy(error = e.message ?: "Error al resolver")
                 _uiState.update { state ->
@@ -64,6 +69,39 @@ class EpisodeViewModel(
                 }
             }
         }
+    }
+
+    fun onWebviewStream(url: String, mediaUrl: String) {
+        val server = webviewServer ?: return
+        _uiState.update { it.copy(webviewUrl = null, resolvingUrl = url) }
+        resolveJob?.cancel()
+        resolveJob = viewModelScope.launch {
+            try {
+                val info = ApiClient.resolveWebviewStream(url, mediaUrl)
+                val resolved = server.copy(stream = info, error = null, skipReason = null, resolvable = true)
+                _uiState.update { state ->
+                    state.copy(
+                        languages = state.languages.mapServers(url) { resolved },
+                        selectedServer = resolved,
+                        resolvingUrl = null
+                    )
+                }
+            } catch (e: Exception) {
+                val failed = server.copy(error = e.message ?: "Error al resolver")
+                _uiState.update { state ->
+                    state.copy(
+                        languages = state.languages.mapServers(url) { failed },
+                        selectedServer = failed,
+                        resolvingUrl = null
+                    )
+                }
+            }
+        }
+    }
+
+    fun dismissWebview() {
+        webviewServer = null
+        _uiState.update { it.copy(webviewUrl = null) }
     }
 
     fun openEpisode(url: String) {

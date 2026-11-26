@@ -24,7 +24,6 @@ object ApiClient {
         val app = context.applicationContext
         appContext = app
         com.notanime.es.net.CronetHttp.init(app)
-        com.notanime.es.extractor.WebViewStream.init(app)
         syncedUserAgent = WebSettings.getDefaultUserAgent(app)
         com.notanime.es.net.CronetHttp.configure(defaultUserAgent = syncedUserAgent)
         DebugCapture.dir = File(app.cacheDir, "captures").apply { mkdirs() }
@@ -111,6 +110,9 @@ object ApiClient {
 
     suspend fun resolveServer(server: com.notanime.es.scraper.EmbedServer) =
         call { it.resolveServer(server) }
+
+    suspend fun resolveWebviewStream(url: String, mediaUrl: String): com.notanime.es.extractor.StreamInfo =
+        com.notanime.es.extractor.WebViewStream.buildInfo(url, mediaUrl)
 
     suspend fun resolve(url: String) = call { it.resolve(url) }
 }

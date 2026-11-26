@@ -30,7 +30,9 @@ class MoviePlayback(
     val url: String,
     val onSelectLanguage: (String) -> Unit,
     val onSelectServer: (SourceServer) -> Unit,
-    val onReload: () -> Unit
+    val onReload: () -> Unit,
+    val onWebviewStream: (String, String) -> Unit,
+    val onDismissWebview: () -> Unit
 ) {
     var uiState by mutableStateOf(EpisodeUiState(url = url))
     var controller by mutableStateOf<MediaController?>(null)
@@ -52,7 +54,14 @@ fun rememberMoviePlayback(
 ): MoviePlayback {
     val viewModel: EpisodeViewModel = viewModel(key = "movie-$url") { EpisodeViewModel(url) }
     val playback = remember {
-        MoviePlayback(url, viewModel::selectLanguage, viewModel::selectServer, viewModel::reload)
+        MoviePlayback(
+            url,
+            viewModel::selectLanguage,
+            viewModel::selectServer,
+            viewModel::reload,
+            viewModel::onWebviewStream,
+            viewModel::dismissWebview
+        )
     }
     val uiState by viewModel.uiState.collectAsState()
     playback.uiState = uiState

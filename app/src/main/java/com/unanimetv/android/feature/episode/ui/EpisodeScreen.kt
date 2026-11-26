@@ -74,6 +74,7 @@ import com.unanimetv.android.core.playback.ui.LanguageGroup
 import com.unanimetv.android.core.playback.ui.PlayerSurface
 import com.unanimetv.android.core.playback.ui.PlayerVideo
 import com.unanimetv.android.core.playback.ui.rememberMediaController
+import com.unanimetv.android.core.playback.ui.WebViewStreamDialog
 import com.unanimetv.android.core.playback.PlaybackStore
 import com.unanimetv.android.ui.LinkMenu
 
@@ -88,6 +89,13 @@ fun EpisodeScreen(
 ) {
     val viewModel: EpisodeViewModel = viewModel(key = url) { EpisodeViewModel(url) }
     val uiState by viewModel.uiState.collectAsState()
+    uiState.webviewUrl?.let { webviewUrl ->
+        WebViewStreamDialog(
+            url = webviewUrl,
+            onStream = { mediaUrl -> viewModel.onWebviewStream(webviewUrl, mediaUrl) },
+            onDismiss = viewModel::dismissWebview
+        )
+    }
 
     when {
         uiState.isLoading && uiState.seasons.isEmpty() -> LoadingState(modifier = modifier)
